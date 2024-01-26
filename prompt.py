@@ -1,10 +1,11 @@
 import logging
+import signal
+from actions import start, stop, restart, status, reload, exit_action
 
 logger = logging.getLogger("taskmaster: " + __name__)
 logging.basicConfig()
 logger.setLevel(logging.DEBUG)
-import signal
-from actions import start, stop, restart, status, reload, exit_action
+
 
 def command_interpreter(command: str):
     match command:
@@ -27,9 +28,11 @@ def command_interpreter(command: str):
                 + "` (Available commands: start, stop, restart, reload, status, exit)"
             )
 
+
 def sigint_handler(signum, frame):
     logger.info("\nSIGINT received, stopping...")
     exit_action()
+
 
 def prompt():
     signal.signal(signal.SIGINT, sigint_handler)
