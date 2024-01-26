@@ -25,7 +25,8 @@ def command_interpreter(command: str):
             logger.info(
                 "Unknown command: `"
                 + command
-                + "` (Available commands: start, stop, restart, reload, status, exit)"
+                + "` (Available commands: start, stop, restart, "
+                + "reload, status, exit)"
             )
 
 
