@@ -22,6 +22,7 @@ def exit_action(task_list: list[Task]):
 
 def reload_config_file(file_path: str, task_list: list[Task]):
     logger.info("Reloading config file...")
+    # VICTOR
     # abort reload if new config file is invalid
     # stop all tasks removed from new config
     # add new tasks only from new config to task list after starting them
