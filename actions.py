@@ -27,3 +27,4 @@ def reload():
 
 def exit_action():
     logger.info("exiting ...")
+    exit(0)
