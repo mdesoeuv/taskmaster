@@ -1,7 +1,16 @@
 from dataclasses import dataclass, field
+import logging
+import os
+import signal
+import subprocess
+import time
 from typing import List
 from enum import Enum
 from yamldataclassconfig.config import YamlDataClassConfig
+
+logger = logging.getLogger("taskmaster: " + __name__)
+logging.basicConfig()
+logger.setLevel(logging.DEBUG)
 
 
 class Signal(Enum):
@@ -29,9 +38,60 @@ class Task(YamlDataClassConfig):
     stdout: str = "/dev/null"
     stderr: str = "/dev/null"
     env: dict = None
+    process: subprocess.Popen = field(init=False, default=None)
 
     def start(self):
-        print(f"Démarrage de la tâche : {self.cmd}")
+        if self.process and self.process.poll() is None:
+            # Process is already running
+            return
+        try:
+            print(self)
+            # Environment variables setup
+            env = os.environ.copy()
+            if self.env:
+                env.update(self.env)
+
+            # Start the process
+            self.process = subprocess.Popen(
+                self.cmd.split(),
+                stdout=open(self.stdout, "a"),
+                stderr=open(self.stderr, "a"),
+                cwd=self.workingdir,
+                preexec_fn=lambda: os.umask(int(self.umask, 8)),
+                env=env,
+            )
+            # Wait for the process to start successfully
+            time.sleep(self.starttime)
+
+            # Check if the process started successfully
+            if self.process.poll() is not None:
+                # Process failed to start
+                raise Exception("Process failed to start")
+        except Exception as e:
+            # Handle errors in process starting
+            logger.error(f"Error starting process: {e}")
 
     def stop(self):
-        print(f"Arrêt de la tâche avec le signal : {self.stopsignal}")
+        if not self.process or self.process.poll() is not None:
+            # Process is not running
+            return
+        try:
+            # Send the stop signal
+            self.process.send_signal(
+                getattr(signal, f"SIG{self.stopsignal.name}")
+            )
+            # Wait for process to stop
+            start_time = time.time()
+            while time.time() - start_time < self.stoptime:
+                if self.process.poll() is not None:
+                    return  # Process stopped gracefully
+                time.sleep(0.5)
+            # Force kill if not stopped
+            self.process.kill()
+        except Exception as e:
+            # Handle errors in stopping process
+            logger.error(f"Error stopping process: {e}")
+
+    def restart(self):
+        self.stop()
+        self.start()

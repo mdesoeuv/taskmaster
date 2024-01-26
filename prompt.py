@@ -51,14 +51,16 @@ def command_interpreter(command: str, task_list: list[Task]):
             )
 
 
-def sigint_handler(signum, frame):
+def sigint_handler(signum: signal.Signals, frame, tasks_list: list[Task]):
     logger.info("\nSIGINT received, stopping...")
-    exit_action()
+    exit_action(tasks_list)
 
 
 def prompt(tasks_list: list[Task]):
-    signal.signal(signal.SIGINT, sigint_handler)
-
+    signal.signal(
+        signal.SIGINT,
+        lambda signum, frame: sigint_handler(signum, None, tasks_list),
+    )
     while True:
         command = input(">>> ")
         command_interpreter(command, tasks_list)

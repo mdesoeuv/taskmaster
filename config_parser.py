@@ -31,7 +31,6 @@ def config_file_parser(path: pathlib.Path) -> List[Task]:
 
 
 def define_tasks(config: dict):
-    print(config["programs"].keys())
     programs = config["programs"].keys()
     tasks = []
     for program in programs:
