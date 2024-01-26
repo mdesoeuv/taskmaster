@@ -1,21 +1,11 @@
 import logging
 import yaml
 import pathlib
+from exceptions import TaskException, ConfigError 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
 except ImportError:
     from yaml import Loader, Dumper
-
-
-class TaskException(Exception):
-    def __init__(self, message):            
-        super().__init__(message)
-
-
-class ConfigError(TaskException):
-    def __init__(self, message):            
-        super().__init__(message)
-
 
 logger = logging.getLogger("taskmaster")
 logging.basicConfig()
