@@ -23,28 +23,22 @@ def command_interpreter(command: str):
     else:
         action = command[0]
         task_name = command[1]
+        task = find_task_in_list(task_name)
+        if task is None:
+            logger.info("Task " + task_name + " not in config file")
+            return
 
     match action:
         case "start":
-            task = find_task_in_list(task_name)
-            if task is not None:
-                logger.info("Task " + task_name + " already started")
-                return
             task.start()
-        case "stop", "restart", "status", "reload":
-            task = find_task_in_list(task_name)
-            if task is None:
-                logger.info("Task " + task_name + " not started")
-                return
-            match action:
-                case "stop":
-                    task.stop()
-                case "restart":
-                    task.restart()
-                case "status":
-                    task.status()
-                case "reload":
-                    task.reload()
+        case "stop":
+            task.stop()
+        case "restart":
+            task.restart()
+        case "status":
+            task.status()
+        case "reload":
+            task.reload()
         case "exit":
             exit_action()
         case _:

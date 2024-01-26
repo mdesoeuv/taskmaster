@@ -17,8 +17,7 @@ def find_task_in_list(task_name: str):
 
 
 def exit_action():
-    logger.info("exiting ...")
-    # call task.stop for each task
+    logger.info("Exiting all tasks...")
     for task in task_list:
         task.stop()
         logger.info("Task " + task._name + " stopped")
