@@ -38,7 +38,7 @@ class Task(YamlDataClassConfig):
     stdout: str = "/dev/null"
     stderr: str = "/dev/null"
     env: dict = None
-    process: subprocess.Popen = field(init=False, default=None)
+    process: subprocess.run = field(init=False, default=None)
 
     def start(self):
         if self.process and self.process.poll() is None:
@@ -52,9 +52,9 @@ class Task(YamlDataClassConfig):
                 env.update(self.env)
 
             # Start the process
-            self.process = subprocess.Popen(
-                self.cmd.split(),
-                
+            self.process = subprocess.run(
+                self.cmd.split(), shell=True,  text=True,
+                stdout=open(self.stdout, "w"), stderr=open(self.stderr, "w"),
             )
             # Wait for the process to start successfully
             time.sleep(self.starttime)
