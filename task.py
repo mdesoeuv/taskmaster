@@ -37,11 +37,11 @@ class Task(YamlDataClassConfig):
     stdout: str = "/dev/null"
     stderr: str = "/dev/null"
     env: dict = None
-    process: subprocess.run = field(init=False, default=None)
+    process: subprocess.Popen = field(init=False, default=None)
 
     def start(self):
         logger.info(f"Starting task {self.name}")
-        if self.process and self.process.poll() is None:
+        if self.process:
             logger.info(f"Task {self.name} is already running")
             return
         try:
@@ -59,11 +59,6 @@ class Task(YamlDataClassConfig):
             )
             # Wait for the process to start successfully
             time.sleep(self.starttime)
-
-            # Check if the process started successfully
-            if self.process.poll() is not None:
-                # Process failed to start
-                raise Exception("Process failed to start")
         except Exception as e:
             # Handle errors in process starting
             logger.error(f"Error starting process: {e}")
@@ -71,24 +66,19 @@ class Task(YamlDataClassConfig):
 
     def stop(self):
         logger.info(f"Stopping task {self.name}")
-        if not self.process or self.process.poll() is not None:
+        if not self.process:
             logger.info(f"Task {self.name} is already stopped")
             return
         try:
-            # Send the stop signal
-            self.process.send_signal(
-                getattr(signal, f"SIG{self.stopsignal.name}")
-            )
             # Wait for process to stop
             start_time = time.time()
             while time.time() - start_time < self.stoptime:
-                if self.process.poll() is not None:
+                if self.process is not None:
                     return  # Process stopped gracefully
                 time.sleep(0.5)
-            # Force kill if not stopped
+            # Force kill the process
             self.process.kill()
         except Exception as e:
-            # Handle errors in stopping process
             logger.error(f"Error stopping process: {e}")
         logger.info(f"Task {self.name} stopped successfully")
 
