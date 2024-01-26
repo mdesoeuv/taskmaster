@@ -26,8 +26,6 @@ def main():
     args = parse_arguments()
     config_parser(path=pathlib.Path(args.configuration_file_path))
 
-
-
 if __name__ == "__main__":
     try:
         main()
