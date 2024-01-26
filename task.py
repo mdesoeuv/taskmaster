@@ -19,7 +19,7 @@ class Task:
     workingdir: str = "/tmp"
     autostart: bool = True
     autorestart: bool = True
-    exitcodes: List(int)
+    exitcodes: List[int] = [0, 1]
     startretries: int = 3
     starttime: int = 0
     stopsignal: Signal = Signal.TERM

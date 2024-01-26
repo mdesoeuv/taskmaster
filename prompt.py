@@ -8,17 +8,28 @@ logger.setLevel(logging.DEBUG)
 
 
 def command_interpreter(command: str):
-    match command:
+    command = command.split()
+    if len(command) == 0:
+        return
+    if len(command) == 1 and command[0] != "exit":
+        logger.info("Not enough arguments. usage: command [task_name]")
+    elif len(command) > 2:
+        logger.info("Too many arguments. usage: command [task_name]")
+    else:
+        action = command[0]
+        task_name = command[1]
+
+    match action:
         case "start":
-            start()
+            start(task_name)
         case "stop":
-            stop()
+            stop(task_name)
         case "restart":
-            restart()
+            restart(task_name)
         case "status":
-            status()
+            status(task_name)
         case "reload":
-            reload()
+            reload(task_name)
         case "exit":
             exit_action()
         case _:
