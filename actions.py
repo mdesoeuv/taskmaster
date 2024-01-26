@@ -25,5 +25,5 @@ def reload():
     logger.info("reload")
 
 
-def exit():
+def exit_action():
     logger.info("exiting ...")
