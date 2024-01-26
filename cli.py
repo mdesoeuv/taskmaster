@@ -8,11 +8,7 @@ logger.setLevel(logging.DEBUG)
 
 def parse_arguments():
 	parser = argparse.ArgumentParser(description='Process taskmaster options.')
-	parser.add_argument('integers', metavar='N', type=int, nargs='+',
-						help='an integer for the accumulator')
-	parser.add_argument('--sum', dest='accumulate', action='store_const',
-						const=sum, default=max,
-						help='sum the integers (default: find the max)')
-
+	parser.add_argument('-c', dest='configuration_file_path', type=str, required=True,
+						help='Specify the path of the configuration file.')
 	args = parser.parse_args()
-	print(args.accumulate(args.integers))
+	return args
