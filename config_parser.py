@@ -38,7 +38,7 @@ def define_tasks(config: dict):
         prog = config["programs"][program]
         try:
             task = Task(
-                name=prog.get("name"),
+                name=program,
                 cmd=prog.get("cmd"),
                 numprocs=prog.get("numprocs"),
                 umask=prog.get("umask"),

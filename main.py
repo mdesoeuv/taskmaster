@@ -14,7 +14,7 @@ def main():
     config = config_file_parser(pathlib.Path(args.configuration_file_path))
     tasks = define_tasks(config)
     logger.info(tasks)
-    prompt()
+    prompt(tasks)
 
 
 if __name__ == "__main__":

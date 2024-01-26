@@ -4,13 +4,14 @@ from actions import (
     find_task_in_list,
     exit_action,
 )
+from task import Task
 
 logger = logging.getLogger("taskmaster: " + __name__)
 logging.basicConfig()
 logger.setLevel(logging.DEBUG)
 
 
-def command_interpreter(command: str):
+def command_interpreter(command: str, task_list: list[Task]):
     command = command.split()
     if len(command) == 0:
         return
@@ -23,7 +24,7 @@ def command_interpreter(command: str):
     else:
         action = command[0]
         task_name = command[1]
-        task = find_task_in_list(task_name)
+        task = find_task_in_list(task_name, task_list)
         if task is None:
             logger.info("Task " + task_name + " not in config file")
             return
@@ -40,7 +41,7 @@ def command_interpreter(command: str):
         case "reload":
             task.reload()
         case "exit":
-            exit_action()
+            exit_action(task_list)
         case _:
             logger.info(
                 "Unknown command: `"
@@ -55,9 +56,9 @@ def sigint_handler(signum, frame):
     exit_action()
 
 
-def prompt():
+def prompt(tasks_list: list[Task]):
     signal.signal(signal.SIGINT, sigint_handler)
 
     while True:
         command = input(">>> ")
-        command_interpreter(command)
+        command_interpreter(command, tasks_list)
