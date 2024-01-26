@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 import logging
-import signal
 import subprocess
 import time
 from typing import List
