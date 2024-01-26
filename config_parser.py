@@ -26,8 +26,3 @@ def parse_arguments():
 						help='Specify the path of the configuration file.')
 	args = parser.parse_args()
 	return args
-
-def parse_args_and_config():
-	logger.info("Hello !")
-	args = parse_arguments()
-	config_file_parser(pathlib.Path(args.configuration_file_path))

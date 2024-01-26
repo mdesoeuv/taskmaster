@@ -8,17 +8,17 @@ logger.setLevel(logging.DEBUG)
 def command_interpreter(command: str):
 	match command:
 		case "start":
-			print("starting ...")
+			logger.info("starting ...")
 		case "stop":
-			print("stoping ...")
+			logger.info("stoping ...")
 		case "restart":
-			print("restart")
+			logger.info("restart")
 		case _:
-			print("Unknown command: " + command)
+			logger.info("Unknown command: " + command)
+			logger.info("Available commands: start, stop, restart")
 
 def prompt_actions():
 	while True:
-        # Attendre une commande de l'utilisateur
 		command = input(">>> ")
 		command_interpreter(command)
 	
