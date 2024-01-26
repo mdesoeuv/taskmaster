@@ -29,3 +29,9 @@ class Task(YamlDataClassConfig):
     stdout: str = "/dev/null"
     stderr: str = "/dev/null"
     env: dict = None
+
+    def start(self):
+        print(f"Démarrage de la tâche : {self.cmd}")
+
+    def stop(self):
+        print(f"Arrêt de la tâche avec le signal : {self.stopsignal}")
