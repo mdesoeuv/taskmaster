@@ -1,6 +1,7 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List
 from enum import Enum
+from yamldataclassconfig.config import YamlDataClassConfig
 
 
 class Signal(Enum):
@@ -12,14 +13,15 @@ class Signal(Enum):
 
 
 @dataclass
-class Task:
+class Task(YamlDataClassConfig):
+    name: str
     cmd: str
     numprocs: int = 1
     umask: str = "022"
     workingdir: str = "/tmp"
     autostart: bool = True
     autorestart: bool = True
-    exitcodes: List[int] = [0, 1]
+    exitcodes: List[int] = field(default_factory=lambda: [0, 1])
     startretries: int = 3
     starttime: int = 0
     stopsignal: Signal = Signal.TERM
