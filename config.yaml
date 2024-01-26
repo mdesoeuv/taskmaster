@@ -1,0 +1,9 @@
+tasks:
+  task1:
+    run: yes
+    restart: yes
+  task2:
+    run: no
+    restart: no
+    
+  
