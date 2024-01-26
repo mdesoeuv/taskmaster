@@ -11,7 +11,9 @@ def command_interpreter(command: str):
     command = command.split()
     if len(command) == 0:
         return
-    if len(command) == 1 and command[0] != "exit":
+    if len(command) == 1 and command[0] == "exit":
+        action = command[0]
+    elif len(command) == 1:
         logger.info("Not enough arguments. usage: command [task_name]")
     elif len(command) > 2:
         logger.info("Too many arguments. usage: command [task_name]")
