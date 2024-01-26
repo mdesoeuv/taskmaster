@@ -1,8 +1,10 @@
 import logging
 import signal
+from typing import List
 from actions import (
     find_task_in_list,
     exit_action,
+    reload_config_file,
 )
 from task import Task
 
@@ -10,12 +12,15 @@ logger = logging.getLogger("taskmaster: " + __name__)
 logging.basicConfig()
 logger.setLevel(logging.DEBUG)
 
+task_list: List[Task] = []
 
-def command_interpreter(command: str, task_list: list[Task]):
+
+def command_interpreter(command: str, config_file_path: str):
+    global task_list
     command = command.split()
     if len(command) == 0:
         return
-    if len(command) == 1 and command[0] == "exit":
+    if len(command) == 1 and command[0] in ["exit", "reload"]:
         action = command[0]
     elif len(command) == 1:
         logger.info("Not enough arguments. usage: command [task_name]")
@@ -41,7 +46,7 @@ def command_interpreter(command: str, task_list: list[Task]):
         case "status":
             task.status()
         case "reload":
-            task.reload()
+            task_list = reload_config_file(config_file_path, task_list)
         case "exit":
             exit_action(task_list)
         case _:
@@ -51,16 +56,16 @@ def command_interpreter(command: str, task_list: list[Task]):
             )
 
 
-def sigint_handler(signum: signal.Signals, frame, tasks_list: list[Task]):
+def sigint_handler(signum: signal.Signals, frame):
+    global task_list
     logger.info("\nSIGINT received, stopping...")
-    exit_action(tasks_list)
+    exit_action(task_list)
 
 
-def prompt(tasks_list: list[Task]):
-    signal.signal(
-        signal.SIGINT,
-        lambda signum, frame: sigint_handler(signum, None, tasks_list),
-    )
+def prompt(start_task_list: list[Task], config_file_path: str):
+    global task_list
+    task_list = start_task_list
+    signal.signal(signal.SIGINT, sigint_handler)
     while True:
         command = input(">>> ")
-        command_interpreter(command, tasks_list)
+        command_interpreter(command, config_file_path)

@@ -13,7 +13,7 @@ def main():
     args = parse_arguments()
     config = config_file_parser(pathlib.Path(args.configuration_file_path))
     tasks = define_tasks(config)
-    prompt(tasks)
+    prompt(tasks, args.configuration_file_path)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 import logging
-import os
 import signal
 import subprocess
 import time
@@ -41,15 +40,13 @@ class Task(YamlDataClassConfig):
     process: subprocess.run = field(init=False, default=None)
 
     def start(self):
+        logger.info(f"Starting task {self.name}")
         if self.process and self.process.poll() is None:
-            # Process is already running
+            logger.info(f"Task {self.name} is already running")
             return
         try:
             print(self)
-            # Environment variables setup
-            env = os.environ.copy()
-            if self.env:
-                env.update(self.env)
+            # Environment variables setup todo
 
             # Start the process
             self.process = subprocess.run(
@@ -70,10 +67,12 @@ class Task(YamlDataClassConfig):
         except Exception as e:
             # Handle errors in process starting
             logger.error(f"Error starting process: {e}")
+        logger.info(f"Task {self.name} started successfully")
 
     def stop(self):
+        logger.info(f"Stopping task {self.name}")
         if not self.process or self.process.poll() is not None:
-            # Process is not running
+            logger.info(f"Task {self.name} is already stopped")
             return
         try:
             # Send the stop signal
@@ -91,6 +90,7 @@ class Task(YamlDataClassConfig):
         except Exception as e:
             # Handle errors in stopping process
             logger.error(f"Error stopping process: {e}")
+        logger.info(f"Task {self.name} stopped successfully")
 
     def restart(self):
         self.stop()
