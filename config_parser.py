@@ -31,14 +31,13 @@ def config_file_parser(path: pathlib.Path) -> List[Task]:
 
 
 def define_tasks(config: dict):
-    print(config["programs"].keys())
     programs = config["programs"].keys()
     tasks = []
     for program in programs:
         prog = config["programs"][program]
         try:
             task = Task(
-                name=prog.get("name"),
+                name=program,
                 cmd=prog.get("cmd"),
                 numprocs=prog.get("numprocs"),
                 umask=prog.get("umask"),

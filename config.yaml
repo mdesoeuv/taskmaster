@@ -4,18 +4,18 @@ programs:
     cmd: "/bin/ls -l"
     numprocs: 1
     umask: 022
-    workingdir: /tmp
+    workingdir: /Users/victorchevillotte/Documents/42/taskmaster
     autostart: true
     autorestart: unexpected
     exitcodes:
     - 0
     - 2
     startretries: 3
-    starttime: 5
+    starttime: 1
     stopsignal: TERM
-    stoptime: 10
-    stdout: /tmp/ls.stdout
-    stderr: /tmp/ls.stderr
+    stoptime: 1
+    stdout: /Users/victorchevillotte/Documents/42/taskmaster/ls.stdout
+    stderr: /Users/victorchevillotte/Documents/42/taskmaster/ls.stderr
     env:
       STARTED_BY: taskmaster
       ANSWER: 42
