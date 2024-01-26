@@ -1,6 +1,9 @@
 import logging
 import signal
-from actions import start, stop, restart, status, reload, exit_action
+from actions import (
+    find_task_in_list,
+    exit_action,
+)
 
 logger = logging.getLogger("taskmaster: " + __name__)
 logging.basicConfig()
@@ -23,15 +26,25 @@ def command_interpreter(command: str):
 
     match action:
         case "start":
-            start(task_name)
-        case "stop":
-            stop(task_name)
-        case "restart":
-            restart(task_name)
-        case "status":
-            status(task_name)
-        case "reload":
-            reload(task_name)
+            task = find_task_in_list(task_name)
+            if task is not None:
+                logger.info("Task " + task_name + " already started")
+                return
+            task.start()
+        case "stop", "restart", "status", "reload":
+            task = find_task_in_list(task_name)
+            if task is None:
+                logger.info("Task " + task_name + " not started")
+                return
+            match action:
+                case "stop":
+                    task.stop()
+                case "restart":
+                    task.restart()
+                case "status":
+                    task.status()
+                case "reload":
+                    task.reload()
         case "exit":
             exit_action()
         case _:
