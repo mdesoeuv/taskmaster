@@ -19,14 +19,16 @@ def command_interpreter(command: str, task_list: list[Task]):
         action = command[0]
     elif len(command) == 1:
         logger.info("Not enough arguments. usage: command [task_name]")
+        return
     elif len(command) > 2:
         logger.info("Too many arguments. usage: command [task_name]")
+        return
     else:
         action = command[0]
         task_name = command[1]
         task = find_task_in_list(task_name, task_list)
         if task is None:
-            logger.info("Task " + task_name + " not in config file")
+            logger.info(f"Task {task_name} not in config file")
             return
 
     match action:
@@ -44,10 +46,8 @@ def command_interpreter(command: str, task_list: list[Task]):
             exit_action(task_list)
         case _:
             logger.info(
-                "Unknown command: `"
-                + command
-                + "` (Available commands: start, stop, restart, "
-                + "reload, status, exit)"
+                f"Unknown command: `{action}` (Available commands: "
+                "start, stop, restart, reload, status, exit)"
             )
 
 

@@ -54,11 +54,7 @@ class Task(YamlDataClassConfig):
             # Start the process
             self.process = subprocess.Popen(
                 self.cmd.split(),
-                stdout=open(self.stdout, "a"),
-                stderr=open(self.stderr, "a"),
-                cwd=self.workingdir,
-                preexec_fn=lambda: os.umask(int(self.umask, 8)),
-                env=env,
+                
             )
             # Wait for the process to start successfully
             time.sleep(self.starttime)

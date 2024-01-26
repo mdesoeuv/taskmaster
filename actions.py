@@ -17,5 +17,5 @@ def exit_action(task_list: list[Task]):
     logger.info("Exiting all tasks...")
     for task in task_list:
         task.stop()
-        logger.info("Task " + task.name + " stopped")
+        logger.info(f"Task {task.name} stopped")
     exit(0)
