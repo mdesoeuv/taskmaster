@@ -1,5 +1,25 @@
 programs:
 
+  ls:
+    cmd: "/bin/ls -l"
+    numprocs: 1
+    umask: 022
+    workingdir: /tmp
+    autostart: true
+    autorestart: unexpected
+    exitcodes:
+    - 0
+    - 2
+    startretries: 3
+    starttime: 5
+    stopsignal: TERM
+    stoptime: 10
+    stdout: /tmp/ls.stdout
+    stderr: /tmp/ls.stderr
+    env:
+      STARTED_BY: taskmaster
+      ANSWER: 42
+
   nginx:
     cmd: "/usr/local/bin/nginx -c /etc/nginx/test.conf"
     numprocs: 1

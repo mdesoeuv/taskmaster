@@ -19,7 +19,7 @@ class Task:
     workingdir: str = "/tmp"
     autostart: bool = True
     autorestart: bool = True
-    exitcodes: List(int)
+    exitcodes: List[int] = [0, 1]
     startretries: int = 3
     starttime: int = 0
     stopsignal: Signal = Signal.TERM
@@ -27,3 +27,9 @@ class Task:
     stdout: str = "/dev/null"
     stderr: str = "/dev/null"
     env: dict = None
+
+    def start(self):
+        print(f"Démarrage de la tâche : {self.cmd}")
+
+    def stop(self):
+        print(f"Arrêt de la tâche avec le signal : {self.stopsignal}")
