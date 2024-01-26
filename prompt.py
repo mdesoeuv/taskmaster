@@ -4,22 +4,22 @@ logger = logging.getLogger("taskmaster: " + __name__)
 logging.basicConfig()
 logger.setLevel(logging.DEBUG)
 import signal
-
+from actions import start, stop, restart, status, reload, exit_action
 
 def command_interpreter(command: str):
     match command:
         case "start":
-            logger.info("starting ...")
+            start()
         case "stop":
-            logger.info("stoping ...")
+            stop()
         case "restart":
-            logger.info("restart")
+            restart()
         case "status":
-            logger.info("status")
+            status()
         case "reload":
-            logger.info("reload")
+            reload()
         case "exit":
-            logger.info("exit")
+            exit_action()
         case _:
             logger.info(
                 "Unknown command: `"
@@ -29,10 +29,9 @@ def command_interpreter(command: str):
 
 def sigint_handler(signum, frame):
     logger.info("\nSIGINT received, stopping...")
-    exit(0)
+    exit_action()
 
-
-def prompt_actions():
+def prompt():
     signal.signal(signal.SIGINT, sigint_handler)
 
     while True:

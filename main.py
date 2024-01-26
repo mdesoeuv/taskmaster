@@ -2,7 +2,7 @@ import logging
 import pathlib
 from exceptions import TaskException 
 from config_parser import config_file_parser, parse_arguments
-from shell import prompt
+from prompt import prompt
 
 logger = logging.getLogger("taskmaster")
 logging.basicConfig()
