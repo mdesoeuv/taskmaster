@@ -4,7 +4,7 @@ programs:
     cmd: "/bin/ls -l"
     numprocs: 1
     umask: 022
-    workingdir: /Users/victorchevillotte/Documents/42/taskmaster
+    workingdir: /Users/mdesoeuvre/42/taskmaster
     autostart: true
     autorestart: unexpected
     exitcodes:
@@ -14,8 +14,8 @@ programs:
     starttime: 1
     stopsignal: TERM
     stoptime: 1
-    stdout: /Users/victorchevillotte/Documents/42/taskmaster/ls.stdout
-    stderr: /Users/victorchevillotte/Documents/42/taskmaster/ls.stderr
+    stdout: /Users/mdesoeuvre/42/taskmaster/ls.stdout
+    stderr: /Users/mdesoeuvre/42/taskmaster/ls.stderr
     env:
       STARTED_BY: taskmaster
       ANSWER: 42
