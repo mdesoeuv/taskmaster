@@ -19,6 +19,13 @@ class Signal(Enum):
     KILL = "KILL"
 
 
+class Status(Enum):
+    STOPPED = "STOPPED"
+    RUNNING = "RUNNING"
+    EXITED = "EXITED"
+    FATAL = "FATAL"
+
+
 @dataclass
 class Task(YamlDataClassConfig):
     name: str
@@ -37,6 +44,8 @@ class Task(YamlDataClassConfig):
     stderr: str = "/dev/null"
     env: dict = None
     process: subprocess.Popen = field(init=False, default=None)
+    status: Status = field(init=False, default=Status.STOPPED)
+    retries: int = 0
 
     def start(self):
         logger.info(f"Starting task {self.name}")
@@ -48,9 +57,9 @@ class Task(YamlDataClassConfig):
             # Environment variables setup todo
 
             # Start the process
-            self.process = subprocess.run(
+            self.process = subprocess.Popen(
                 self.cmd.split(),
-                shell=True,
+                shell=False,
                 text=True,
                 stdout=open(self.stdout, "w"),
                 stderr=open(self.stderr, "w"),
@@ -65,8 +74,9 @@ class Task(YamlDataClassConfig):
 
     def stop(self):
         logger.info(f"Stopping task {self.name}")
-        if not self.process:
+        if not self.process or not self.process.poll():
             logger.info(f"Task {self.name} is already stopped")
+            self.process = None
             return
         try:
             # Wait for process to stop
