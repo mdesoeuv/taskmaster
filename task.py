@@ -43,7 +43,7 @@ class Task(YamlDataClassConfig):
     stdout: str = "/dev/null"
     stderr: str = "/dev/null"
     env: dict = None
-    process: Dict[int, subprocess.Popen] = field(init=False, default=None)
+    process: Dict[int, subprocess.Popen] = field(init=False, default_factory=dict)
     status: Dict[int, Status] = field(
         init=False, default_factory=lambda: {0: Status.STOPPED}
     )
@@ -72,10 +72,8 @@ class Task(YamlDataClassConfig):
                     text=True,
                     stdout=open(self.stdout, "w"),
                     stderr=open(self.stderr, "w"),
-                    cwd=self.workingdir,
-                    env=self.env,
-                    postexec_fn=execution_callback(self),
-                    name=f"{self.name}-{process_id}",
+                    cwd=self.workingdir
+                    # env=self.env,
                 )
                 self.status[process_id] = Status.RUNNING
             except Exception as e:
