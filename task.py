@@ -51,15 +51,6 @@ class Task(YamlDataClassConfig):
     )
     retries: int = 0
 
-    def _format_cmd(self):
-        env = []
-        for key, value in self.env.items():
-            line = str(key) + "=" + str(value)
-            env.append(line)
-        cmd = [*env, *self.cmd.split()]
-        print(cmd)
-        return cmd
-
     def start(self):
         logger.info(f"Starting task {self.name}")
         if self.process:
@@ -84,7 +75,8 @@ class Task(YamlDataClassConfig):
                     stdout=open(self.stdout, "w"),
                     stderr=open(self.stderr, "w"),
                     cwd=self.workingdir,
-                    umask=self.umask
+                    umask=self.umask,
+                    env=self.env,
                 )
                 self.status[process_id] = Status.RUNNING
             except Exception as e:
