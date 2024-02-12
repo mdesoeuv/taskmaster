@@ -11,7 +11,7 @@ logging.basicConfig()
 logger.setLevel(logging.DEBUG)
 
 
-class Signal(Enum):
+class Signal(str, Enum):
     TERM = "TERM"
     HUP = "HUP"
     INT = "INT"
@@ -19,11 +19,14 @@ class Signal(Enum):
     KILL = "KILL"
 
 
-class Status(Enum):
+class Status(str, Enum):
     STOPPED = "STOPPED"
     RUNNING = "RUNNING"
     EXITED = "EXITED"
     FATAL = "FATAL"
+
+    def __str__(self) -> str:
+        return self.value
 
 
 @dataclass
@@ -46,10 +49,11 @@ class Task(YamlDataClassConfig):
     process: Dict[int, subprocess.Popen] = field(
         init=False, default_factory=dict
     )
-    status: Dict[int, Status] = field(
-        init=False, default_factory=lambda: {0: Status.STOPPED}
-    )
     retries: int = 0
+    status: Dict[int, Status] = field(init=False)
+
+    def __post_init__(self):
+        self.status = {i: Status.STOPPED for i in range(self.numprocs)}
 
     def start(self):
         logger.info(f"Starting task {self.name}")
