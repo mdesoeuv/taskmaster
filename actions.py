@@ -36,6 +36,35 @@ def is_task_in_list(task_list: list[Task], task_name: str) -> bool:
     return res
 
 
+def are_tasks_different(old_task: Task, new_task: Task) -> bool:
+    # Compare only the specified attributes
+    attrs_to_compare = [
+        "name",
+        "cmd",
+        "numprocs",
+        "umask",
+        "workingdir",
+        "autostart",
+        "autorestart",
+        "exitcodes",
+        "startretries",
+        "starttime",
+        "stopsignal",
+        "stoptime",
+        "stdout",
+        "stderr",
+        "env",
+    ]
+
+    for attr in attrs_to_compare:
+        old_attr = getattr(old_task, attr)
+        new_attr = getattr(new_task, attr)
+        if old_attr != new_attr:
+            return True
+
+    return False
+
+
 def reload_config_file(
     file_path: str, old_task_list: list[Task]
 ) -> list[Task]:
@@ -51,7 +80,7 @@ def reload_config_file(
             )
             if new_task:
                 # old task with new config
-                if old_task != new_task: # TODO create compare function
+                if are_tasks_different(old_task, new_task):
                     logger.info(
                         f"Task {new_task.name} has changed. Reloading task..."
                     )
