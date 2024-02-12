@@ -36,7 +36,9 @@ def is_task_in_list(task_list: list[Task], task_name: str) -> bool:
     return res
 
 
-def reload_config_file(file_path: str, old_task_list: list[Task]):
+def reload_config_file(
+    file_path: str, old_task_list: list[Task]
+) -> list[Task]:
     logger.info("Reloading config file...")
     updated_task_list = []
     try:
@@ -49,7 +51,7 @@ def reload_config_file(file_path: str, old_task_list: list[Task]):
             )
             if new_task:
                 # old task with new config
-                if old_task != new_task:
+                if old_task != new_task: # TODO create compare function
                     logger.info(
                         f"Task {new_task.name} has changed. Reloading task..."
                     )
@@ -60,7 +62,7 @@ def reload_config_file(file_path: str, old_task_list: list[Task]):
                 # old task without changes
                 else:
                     logger.info(f"Task {new_task.name} unchanged")
-                    updated_task_list.append(new_task)
+                    updated_task_list.append(old_task)
             # old task that is no longer in config
             else:
                 old_task.stop()
