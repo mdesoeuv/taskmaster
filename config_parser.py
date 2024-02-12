@@ -30,6 +30,13 @@ def config_file_parser(path: pathlib.Path) -> List[Task]:
     return config
 
 
+def format_env(env: dict) -> dict:
+    formatted = {}
+    for key, value in env.items():
+        formatted[key] = str(value)
+    return formatted
+
+
 def define_tasks(config: dict):
     programs = config["programs"].keys()
     tasks = []
@@ -51,7 +58,7 @@ def define_tasks(config: dict):
                 stoptime=prog.get("stoptime"),
                 stdout=prog.get("stdout"),
                 stderr=prog.get("stderr"),
-                env=prog.get("env"),
+                env=format_env(prog.get("env", {}))
             )
         except Exception as e:
             logger.error("Error while parsing task definition.")

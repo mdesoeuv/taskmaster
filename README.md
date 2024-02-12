@@ -1,11 +1,11 @@
 # taskmaster
 
 - Commande Reload : Victor
-- Subprocess.run => Subprocess.popen : Mehdi
-- Start Delay : Mehdi Comparer avec supervisor
+- Start Delay : Mehdi Comparer avec supervisor sleep
 - Task Status : Mehdi
 - Kill 
 - Stop Delay
+- exit code et retries
 
 - The number of processes to start and keep running
 - Whether to start this program at launch or not

@@ -4,7 +4,27 @@ programs:
     cmd: "/bin/ls -l"
     numprocs: 3
     umask: 022
-    workingdir: /Users/mdesoeuvre/42/taskmaster
+    workingdir: /home/mdesoeuv/Projects/taskmaster
+    autostart: true
+    autorestart: unexpected
+    exitcodes:
+    - 1
+    - 2
+    startretries: 3
+    starttime: 1
+    stopsignal: TERM
+    stoptime: 1
+    stdout: /home/mdesoeuv/Projects/taskmaster/logs/ls.stdout
+    stderr: /home/mdesoeuv/Projects/taskmaster/logs/ls.stderr
+    env:
+      STARTED_BY: taskmaster
+      ANSWER: 42
+
+  env:
+    cmd: "/bin/env"
+    numprocs: 3
+    umask: 022
+    workingdir: /home/mdesoeuv/Projects/taskmaster
     autostart: true
     autorestart: unexpected
     exitcodes:
@@ -14,8 +34,8 @@ programs:
     starttime: 1
     stopsignal: TERM
     stoptime: 1
-    stdout: /Users/mdesoeuvre/42/taskmaster/ls.stdout
-    stderr: /Users/mdesoeuvre/42/taskmaster/ls.stderr
+    stdout: /home/mdesoeuv/Projects/taskmaster/logs/env.stdout
+    stderr: /home/mdesoeuv/Projects/taskmaster/logs/env.stderr
     env:
       STARTED_BY: taskmaster
       ANSWER: 42

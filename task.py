@@ -43,7 +43,9 @@ class Task(YamlDataClassConfig):
     stdout: str = "/dev/null"
     stderr: str = "/dev/null"
     env: dict = None
-    process: Dict[int, subprocess.Popen] = field(init=False, default=None)
+    process: Dict[int, subprocess.Popen] = field(
+        init=False, default_factory=dict
+    )
     status: Dict[int, Status] = field(
         init=False, default_factory=lambda: {0: Status.STOPPED}
     )
@@ -64,8 +66,8 @@ class Task(YamlDataClassConfig):
                 time.sleep(self.starttime)
 
                 logger.info(f"Starting process {self.name}-{process_id}")
-
                 # Start the process
+
                 self.process[process_id] = subprocess.Popen(
                     self.cmd.split(),
                     shell=False,
@@ -73,18 +75,25 @@ class Task(YamlDataClassConfig):
                     stdout=open(self.stdout, "w"),
                     stderr=open(self.stderr, "w"),
                     cwd=self.workingdir,
+                    umask=self.umask,
                     env=self.env,
-                    postexec_fn=execution_callback(self),
-                    name=f"{self.name}-{process_id}",
                 )
                 self.status[process_id] = Status.RUNNING
             except Exception as e:
                 # Handle errors in process starting
                 logger.error(f"Error starting process: {e}")
                 errors += 1
+                self.status[process_id] = Status.FATAL
         logger.info(
             f"Task {self.name}: {self.numprocs - errors}/{self.numprocs} started successfully"
         )
+        # try:
+        #     for process in self.process.values():
+        #         res = process.wait()
+        #         result = process.returncode
+        #         print(f"exit code: {result}")
+        # except Exception as e:
+        #     logger.error(f"Error: {e}")
 
     def stop(self):
         logger.info(f"Stopping task {self.name}")
@@ -95,6 +104,7 @@ class Task(YamlDataClassConfig):
                 or not self.process[process_id].poll()
             ):
                 logger.info(f"Process {self.name} is already stopped")
+                self.status[process_id] = Status.STOPPED
                 self.process = None
                 return
             try:
@@ -115,7 +125,8 @@ class Task(YamlDataClassConfig):
         self.start()
 
     def get_status(self):
-        print(f"{self.name: }")
+        for process_id in range(self.numprocs):
+            print(f"{self.name}-{process_id}: {self.status[process_id]}")
 
 
 def execution_callback(task: Task):
