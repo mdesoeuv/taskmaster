@@ -1,12 +1,13 @@
 # taskmaster
 
 - Commande Reload : Victor TO TEST 
-- SIGHUP launches reload_config_file using config_file_path, task_list as globals
+- SIGHUP launches reload_config_file using config_file_path, task_list as globals Victor
 - Start Delay : Mehdi Comparer avec supervisor sleep
 - Task Status : Mehdi
 - Kill 
 - Stop Delay
 - exit code et retries
+- env passed to sub process : Victor
 
 - The number of processes to start and keep running
 - Whether to start this program at launch or not
