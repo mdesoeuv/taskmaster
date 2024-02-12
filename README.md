@@ -7,7 +7,6 @@
 - Kill 
 - Stop Delay
 - exit code et retries
-- env passed to sub process : Victor
 
 - The number of processes to start and keep running
 - Whether to start this program at launch or not
