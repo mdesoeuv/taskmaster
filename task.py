@@ -51,6 +51,15 @@ class Task(YamlDataClassConfig):
     )
     retries: int = 0
 
+    def _format_cmd(self):
+        env = []
+        for key, value in self.env.items():
+            line = str(key) + "=" + str(value)
+            env.append(line)
+        cmd = [*env, *self.cmd.split()]
+        print(cmd)
+        return cmd
+
     def start(self):
         logger.info(f"Starting task {self.name}")
         if self.process:
@@ -75,14 +84,14 @@ class Task(YamlDataClassConfig):
                     stdout=open(self.stdout, "w"),
                     stderr=open(self.stderr, "w"),
                     cwd=self.workingdir,
-                    umask=self.umask,
-                    # env=self.env
+                    umask=self.umask
                 )
                 self.status[process_id] = Status.RUNNING
             except Exception as e:
                 # Handle errors in process starting
                 logger.error(f"Error starting process: {e}")
                 errors += 1
+                self.status[process_id] = Status.FATAL
         logger.info(
             f"Task {self.name}: {self.numprocs - errors}/{self.numprocs} started successfully"
         )
@@ -103,6 +112,7 @@ class Task(YamlDataClassConfig):
                 or not self.process[process_id].poll()
             ):
                 logger.info(f"Process {self.name} is already stopped")
+                self.status[process_id] = Status.STOPPED
                 self.process = None
                 return
             try:
@@ -123,7 +133,8 @@ class Task(YamlDataClassConfig):
         self.start()
 
     def get_status(self):
-        print(f"{self.name: }")
+        for process_id in range(self.numprocs):
+            print(f"{self.name}-{process_id}: {self.status[process_id]}")
 
 
 def execution_callback(task: Task):
