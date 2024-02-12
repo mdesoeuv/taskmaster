@@ -2,7 +2,7 @@ programs:
 
   ls:
     cmd: "/bin/ls -l"
-    numprocs: 1
+    numprocs: 3
     umask: 022
     workingdir: /Users/mdesoeuvre/42/taskmaster
     autostart: true
