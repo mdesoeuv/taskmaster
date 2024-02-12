@@ -43,7 +43,9 @@ class Task(YamlDataClassConfig):
     stdout: str = "/dev/null"
     stderr: str = "/dev/null"
     env: dict = None
-    process: Dict[int, subprocess.Popen] = field(init=False, default_factory=dict)
+    process: Dict[int, subprocess.Popen] = field(
+        init=False, default_factory=dict
+    )
     status: Dict[int, Status] = field(
         init=False, default_factory=lambda: {0: Status.STOPPED}
     )
@@ -64,16 +66,17 @@ class Task(YamlDataClassConfig):
                 time.sleep(self.starttime)
 
                 logger.info(f"Starting process {self.name}-{process_id}")
-
                 # Start the process
+
                 self.process[process_id] = subprocess.Popen(
                     self.cmd.split(),
                     shell=False,
                     text=True,
                     stdout=open(self.stdout, "w"),
                     stderr=open(self.stderr, "w"),
-                    cwd=self.workingdir
-                    # env=self.env,
+                    cwd=self.workingdir,
+                    umask=self.umask,
+                    # env=self.env
                 )
                 self.status[process_id] = Status.RUNNING
             except Exception as e:
@@ -83,6 +86,13 @@ class Task(YamlDataClassConfig):
         logger.info(
             f"Task {self.name}: {self.numprocs - errors}/{self.numprocs} started successfully"
         )
+        # try:
+        #     for process in self.process.values():
+        #         res = process.wait()
+        #         result = process.returncode
+        #         print(f"exit code: {result}")
+        # except Exception as e:
+        #     logger.error(f"Error: {e}")
 
     def stop(self):
         logger.info(f"Stopping task {self.name}")
