@@ -44,7 +44,7 @@ def command_interpreter(command: str, config_file_path: str):
         case "restart":
             task.restart()
         case "status":
-            task.status()
+            task.get_status()
         case "reload":
             task_list = reload_config_file(config_file_path, task_list)
         case "exit":
