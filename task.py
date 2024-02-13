@@ -75,14 +75,6 @@ class Process:
             logger.error(f"Error starting process: {e}")
             self.retry()
 
-    # def stop(self):
-    #     if self.process:
-    #         self.process.terminate()
-    #         self.status = Status.STOPPED
-    #         logger.info(f"Process {self.name} stopped")
-    #     else:
-    #         logger.info(f"Process {self.name} is already stopped")
-
     def retry(self):
         if self.retries < self.max_retries:
             self.retries += 1
@@ -124,13 +116,14 @@ class Task(YamlDataClassConfig):
     stderr: str = "/dev/null"
     env: dict = None
     process: Dict[int, Process] = field(init=False, default_factory=dict)
-    retries: int = 0
     status: Dict[int, Status] = field(init=False)
     threads: Dict[int, Thread] = field(init=False)
 
     def __post_init__(self):
         self.status = {i: Status.STOPPED for i in range(self.numprocs)}
         self.threads = {i: None for i in range(self.numprocs)}
+        if self.autostart:
+            self.start()
 
     def start(self):
         logger.info(f"Starting task {self.name}")
@@ -198,8 +191,9 @@ class Task(YamlDataClassConfig):
     def get_status(self):
         for process_id in range(self.numprocs):
             print(
-                f"{self.name}-{process_id}: {self.process[process_id].status}"
+                f"Status: {self.name}-{process_id}: {self.process[process_id].status}"
             )
+            print(f"Repr: {self.name}-{process_id}: {self.process[process_id]}")
 
 
 def execution_callback(task: Task):
