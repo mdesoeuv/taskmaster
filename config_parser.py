@@ -4,7 +4,7 @@ import yaml
 import pathlib
 from exceptions import ConfigError
 from typing import List
-from task import Task
+from task import Task, Signal
 from exceptions import TaskDefinitionError
 
 try:
@@ -54,7 +54,7 @@ def define_tasks(config: dict):
                 exitcodes=prog.get("exitcodes"),
                 startretries=prog.get("startretries"),
                 starttime=prog.get("starttime"),
-                stopsignal=prog.get("stopsignal"),
+                stopsignal=Signal(prog.get("stopsignal")),
                 stoptime=prog.get("stoptime"),
                 stdout=prog.get("stdout"),
                 stderr=prog.get("stderr"),

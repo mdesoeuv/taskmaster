@@ -1,22 +1,32 @@
 from dataclasses import dataclass, field
+import os
 import logging
 import subprocess
 import time
+import signal
 from typing import List, Dict
 from enum import Enum
 from yamldataclassconfig.config import YamlDataClassConfig
+from threading import Thread
+
 
 logger = logging.getLogger("taskmaster: " + __name__)
 logging.basicConfig()
 logger.setLevel(logging.DEBUG)
 
 
-class Signal(str, Enum):
-    TERM = "TERM"
-    HUP = "HUP"
-    INT = "INT"
-    QUIT = "QUIT"
-    KILL = "KILL"
+SIGNAL_MAP = {
+    "TERM": signal.SIGTERM,
+    "HUP": signal.SIGHUP,
+    "INT": signal.SIGINT,
+    "QUIT": signal.SIGQUIT,
+    "KILL": signal.SIGKILL,
+}
+
+
+class Signal:
+    def __init__(self, sig: str = "TERM"):
+        self.signal = SIGNAL_MAP.get(sig, signal.SIGTERM)
 
 
 class Status(str, Enum):
@@ -27,6 +37,93 @@ class Status(str, Enum):
 
     def __str__(self) -> str:
         return self.value
+
+
+@dataclass
+class Process:
+    name: str
+    cmd: str
+    cwd: str
+    env: dict
+    umask: str
+    stdout: str
+    stderr: str
+    exitcodes: List[int]
+    status: Status = Status.STOPPED
+    process: subprocess.CompletedProcess = None
+    kill_signal: Signal = Signal("TERM")
+    returncode: int = None
+    retries: int = 0
+    max_retries: int = 3
+    pid: int = None
+    starttime: int = 0
+    stoptime: int = 0
+    stopflag: bool = False
+
+    def start(self):
+        if self.stopflag:
+            return
+        self.status = Status.RUNNING
+        try:
+            time.sleep(self.starttime)
+            self.process = subprocess.Popen(
+                self.cmd.split(),
+                shell=False,
+                text=True,
+                stdout=open(self.stdout, "w"),
+                stderr=open(self.stderr, "w"),
+                cwd=self.cwd,
+                umask=self.umask,
+                env=self.env,
+            )
+            self.pid = self.process.pid
+            self.process.wait()
+            self.returncode = self.process.returncode
+            self.status = Status.EXITED
+            logger.debug(
+                f"Process {self.name} exited with code {self.returncode}"
+            )
+            if self.returncode not in self.exitcodes:
+                logger.error(
+                    f"Process {self.name} exited with unexepected code {self.returncode} not in {self.exitcodes}"
+                )
+                self.status = Status.FATAL
+                self.retry()
+        except Exception as e:
+            self.status = Status.FATAL
+            logger.error(f"Error starting process: {e}")
+            self.retry()
+
+    def retry(self):
+        if self.retries < self.max_retries:
+            self.retries += 1
+            logger.info(
+                f"Retrying process {self.name} ({self.retries}/{self.max_retries})"
+            )
+            self.start()
+        else:
+            logger.error(f"Max retries reached for process {self.name}")
+            self.status = Status.FATAL
+
+    def kill(self):
+        self.stopflag = True
+        # poll() returns None if the process is still running
+        if self.process and self.process.poll() is None:
+            start_time = time.time()
+            while time.time() - start_time < self.stoptime:
+                time.sleep(0.5)
+            os.kill(self.process.pid, self.kill_signal.signal)
+            self.status = Status.STOPPED
+            self.process = None
+            logger.info(f"Process {self.name} killed")
+        else:
+            logger.info(f"Process {self.name} is already stopped")
+
+    def __str__(self):
+        if self.process:
+            return f"{self.name}: {self.status} pid {self.process.pid} ({self.returncode})"
+        else:
+            return f"{self.name}: {self.status}"
 
 
 @dataclass
@@ -41,48 +138,48 @@ class Task(YamlDataClassConfig):
     exitcodes: List[int] = field(default_factory=lambda: [0, 1])
     startretries: int = 3
     starttime: int = 0
-    stopsignal: Signal = Signal.TERM
+    stopsignal: Signal = Signal("TERM")
     stoptime: int = 10
     stdout: str = "/dev/null"
     stderr: str = "/dev/null"
     env: dict = None
-    process: Dict[int, subprocess.Popen] = field(
-        init=False, default_factory=dict
-    )
-    retries: int = 0
+    process: Dict[int, Process] = field(init=False, default_factory=dict)
     status: Dict[int, Status] = field(init=False)
+    threads: Dict[int, Thread] = field(init=False)
 
     def __post_init__(self):
         self.status = {i: Status.STOPPED for i in range(self.numprocs)}
+        self.threads = {i: None for i in range(self.numprocs)}
+        if self.autostart:
+            self.start()
 
     def start(self):
         logger.info(f"Starting task {self.name}")
-        if self.process:
-            logger.info(f"Task {self.name} is already running")
-            return
         errors = 0
         for process_id in range(self.numprocs):
             try:
-                # print(self)
-                # Environment variables setup todo
-
                 # Wait for the process to start successfully
-                time.sleep(self.starttime)
+                logger.debug(f"Starting process {self.name}-{process_id}")
 
-                logger.info(f"Starting process {self.name}-{process_id}")
-                # Start the process
-
-                self.process[process_id] = subprocess.Popen(
-                    self.cmd.split(),
-                    shell=False,
-                    text=True,
-                    stdout=open(self.stdout, "w"),
-                    stderr=open(self.stderr, "w"),
+                self.process[process_id] = Process(
+                    name=f"{self.name}-{process_id}",
+                    cmd=self.cmd,
                     cwd=self.workingdir,
-                    umask=self.umask,
                     env=self.env,
+                    umask=self.umask,
+                    stdout=self.stdout,
+                    stderr=self.stderr,
+                    exitcodes=self.exitcodes,
+                    kill_signal=self.stopsignal,
+                    starttime=self.starttime,
+                    stoptime=self.stoptime,
+                    stopflag=False,
                 )
-                self.status[process_id] = Status.RUNNING
+                # Start the process
+                self.threads[process_id] = Thread(
+                    target=self.process[process_id].start, args=()
+                )
+                self.threads[process_id].start()
             except Exception as e:
                 # Handle errors in process starting
                 logger.error(f"Error starting process: {e}")
@@ -91,37 +188,25 @@ class Task(YamlDataClassConfig):
         logger.info(
             f"Task {self.name}: {self.numprocs - errors}/{self.numprocs} started successfully"
         )
-        # try:
-        #     for process in self.process.values():
-        #         res = process.wait()
-        #         result = process.returncode
-        #         print(f"exit code: {result}")
-        # except Exception as e:
-        #     logger.error(f"Error: {e}")
 
     def stop(self):
         logger.info(f"Stopping task {self.name}")
-        for process_id in range(self.numprocs):
-            if (
-                not self.process
-                or not self.process[process_id]
-                or not self.process[process_id].poll()
-            ):
-                logger.info(f"Process {self.name} is already stopped")
-                self.status[process_id] = Status.STOPPED
-                self.process = None
-                return
-            try:
-                # Wait for process to stop
-                start_time = time.time()
-                while time.time() - start_time < self.stoptime:
-                    if self.process is not None:
-                        return  # Process stopped gracefully
-                    time.sleep(0.5)
-                # Force kill the process
-                self.process.kill()
-            except Exception as e:
-                logger.error(f"Error stopping process: {e}")
+        try:
+            # Wait for process to stop
+            for process_id in range(self.numprocs):
+                if not self.process or not self.process[process_id]:
+                    logger.debug(
+                        f"Process {self.name}-{process_id} is already stopped"
+                    )
+                    continue
+                logger.debug(f"Stopping process {self.name}-{process_id}")
+                self.process[process_id].kill()
+                self.threads[process_id].join(timeout=0.5)
+                self.process[process_id] = None
+            self.process = None
+
+        except Exception as e:
+            logger.error(f"Error stopping process: {e}")
         logger.info(f"Task {self.name} stopped successfully")
 
     def restart(self):
@@ -130,7 +215,9 @@ class Task(YamlDataClassConfig):
 
     def get_status(self):
         for process_id in range(self.numprocs):
-            print(f"{self.name}-{process_id}: {self.status[process_id]}")
+            print(
+                f"Repr: {self.process[process_id]}"
+            )
 
 
 def execution_callback(task: Task):

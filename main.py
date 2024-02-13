@@ -20,4 +20,4 @@ if __name__ == "__main__":
     try:
         main()
     except TaskException as e:
-        logger.error(e)
+        logger.error(f"Error: {e}")
