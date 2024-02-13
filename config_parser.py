@@ -4,7 +4,7 @@ import yaml
 import pathlib
 from exceptions import ConfigError
 from typing import List
-from task import Task, Signal
+from task import Task, Signal, AutoRestart
 from exceptions import TaskDefinitionError
 
 try:
@@ -50,7 +50,7 @@ def define_tasks(config: dict):
                 umask=prog.get("umask"),
                 workingdir=prog.get("workingdir"),
                 autostart=prog.get("autostart"),
-                autorestart=prog.get("autorestart"),
+                autorestart=AutoRestart(prog.get("autorestart")),
                 exitcodes=prog.get("exitcodes"),
                 startretries=prog.get("startretries"),
                 starttime=prog.get("starttime"),

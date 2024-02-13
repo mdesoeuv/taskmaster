@@ -21,12 +21,14 @@ SIGNAL_MAP = {
     "INT": signal.SIGINT,
     "QUIT": signal.SIGQUIT,
     "KILL": signal.SIGKILL,
+    "USR1": signal.SIGUSR1,
+    "USR2": signal.SIGUSR2
 }
 
 
 class Signal:
     def __init__(self, sig: str = "TERM"):
-        self.signal = SIGNAL_MAP.get(sig, signal.SIGTERM)
+        self.signal = SIGNAL_MAP[sig]
 
 
 class Status(str, Enum):
@@ -34,6 +36,15 @@ class Status(str, Enum):
     RUNNING = "RUNNING"
     EXITED = "EXITED"
     FATAL = "FATAL"
+
+    def __str__(self) -> str:
+        return self.value
+
+
+class AutoRestart(str, Enum):
+    unexpected = "unexpected"
+    always = "always"
+    never = "never"
 
     def __str__(self) -> str:
         return self.value
@@ -48,6 +59,7 @@ class Process:
     umask: str
     stdout: str
     stderr: str
+    autorestart: AutoRestart
     exitcodes: List[int]
     status: Status = Status.STOPPED
     process: subprocess.CompletedProcess = None
@@ -63,7 +75,6 @@ class Process:
     def start(self):
         if self.stopflag:
             return
-        self.status = Status.RUNNING
         try:
             time.sleep(self.starttime)
             self.process = subprocess.Popen(
@@ -77,6 +88,7 @@ class Process:
                 env=self.env,
             )
             self.pid = self.process.pid
+            self.status = Status.RUNNING
             self.process.wait()
             self.returncode = self.process.returncode
             self.status = Status.EXITED
@@ -88,14 +100,19 @@ class Process:
                     f"Process {self.name} exited with unexepected code {self.returncode} not in {self.exitcodes}"
                 )
                 self.status = Status.FATAL
-                self.retry()
+                if self.autorestart == AutoRestart.unexpected:
+                    self.retry()
         except Exception as e:
             self.status = Status.FATAL
             logger.error(f"Error starting process: {e}")
-            self.retry()
+            if self.autorestart != AutoRestart.never:
+                self.retry()
 
     def retry(self):
-        if self.retries < self.max_retries:
+        if (
+            self.retries < self.max_retries
+            and self.autorestart != AutoRestart.never
+        ):
             self.retries += 1
             logger.info(
                 f"Retrying process {self.name} ({self.retries}/{self.max_retries})"
@@ -106,7 +123,9 @@ class Process:
             self.status = Status.FATAL
 
     def kill(self):
+
         self.stopflag = True
+
         # poll() returns None if the process is still running
         if self.process and self.process.poll() is None:
             start_time = time.time()
@@ -134,7 +153,7 @@ class Task(YamlDataClassConfig):
     umask: str = "022"
     workingdir: str = "/tmp"
     autostart: bool = True
-    autorestart: bool = True
+    autorestart: AutoRestart = AutoRestart.unexpected
     exitcodes: List[int] = field(default_factory=lambda: [0, 1])
     startretries: int = 3
     starttime: int = 0
@@ -174,6 +193,7 @@ class Task(YamlDataClassConfig):
                     starttime=self.starttime,
                     stoptime=self.stoptime,
                     stopflag=False,
+                    autorestart=self.autorestart,
                 )
                 # Start the process
                 self.threads[process_id] = Thread(
@@ -215,10 +235,4 @@ class Task(YamlDataClassConfig):
 
     def get_status(self):
         for process_id in range(self.numprocs):
-            print(
-                f"Repr: {self.process[process_id]}"
-            )
-
-
-def execution_callback(task: Task):
-    logger.info(f"{task.name}: Stopped")
+            print(f"Repr: {self.process[process_id]}")
