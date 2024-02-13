@@ -2,12 +2,28 @@
 
 - Commande Reload : OK
 - SIGHUP : OK
-- Start Delay : Mehdi Comparer avec supervisor sleep
-- Task Status : Mehdi
-- Kill 
-- Stop Delay
-- exit code et retries
-
+- Start Delay : changer en starttime validation selon le sujet
+- Task Status : Mehdi : OK -> valider
+- Kill : OK -> valider en testant differents signals
+- Stop Delay : changer en timeout de thread join apres avoir envoye le signal specifie
+- exit code et retries : Mehdi : OK -> valider
+- Ajouter un handler de type file pour le logger (doit logger les actions du programme)
+- Ajouter un historique dans la ligne de commande
+- Etude de supervisord -> Verifier le comportement des toutes les commandes du sujet
+- 
+- Valider le comportement du restart vis a vis des retries and l'implementer
+- Tester le CWD
+- Gestion de l'ecriture dans la console avec le multi-threading
+- Mise en forme de la verbose avec un niveau INFO correspondant a supervisord
+- Reload sans tuer les process si les parametres critiques sont constants ou qu'il s'agit d'augmenter le nombre de process
+- Valider le umask + documenter
+- Interpreter le stopsignal "USR1" de la config exemple du sujet
+- Gestion des parametres d'autorestart "unexpected, always, never" : Mehdi
+- Documentation 
+- Preparer des configs exemples diversifiee
+- Crash tests
+- Bonus
+ 
 - The number of processes to start and keep running
 - Whether to start this program at launch or not
 - Whether the program should be restarted always, never, or on unexpected exits only
