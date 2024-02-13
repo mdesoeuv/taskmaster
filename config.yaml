@@ -8,7 +8,7 @@ programs:
     autostart: true
     autorestart: unexpected
     exitcodes:
-    - 1
+    - 0
     - 2
     startretries: 3
     starttime: 1
@@ -50,7 +50,7 @@ programs:
     exitcodes:
     - 0
     - 2
-    startretries: 3
+    startretries: 1
     starttime: 5
     stopsignal: TERM
     stoptime: 10
@@ -65,7 +65,7 @@ programs:
     numprocs: 8
     umask: 077
     workingdir: /tmp
-    autostart: true
+    autostart: false
     autorestart: unexpected
     exitcodes: 0
     startretries: 3

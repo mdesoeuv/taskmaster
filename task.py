@@ -3,6 +3,7 @@ import os
 import logging
 import subprocess
 import time
+import signal
 from typing import List, Dict
 from enum import Enum
 from yamldataclassconfig.config import YamlDataClassConfig
@@ -14,12 +15,18 @@ logging.basicConfig()
 logger.setLevel(logging.DEBUG)
 
 
-class Signal(str, Enum):
-    TERM = "TERM"
-    HUP = "HUP"
-    INT = "INT"
-    QUIT = "QUIT"
-    KILL = "KILL"
+SIGNAL_MAP = {
+    "TERM": signal.SIGTERM,
+    "HUP": signal.SIGHUP,
+    "INT": signal.SIGINT,
+    "QUIT": signal.SIGQUIT,
+    "KILL": signal.SIGKILL,
+}
+
+
+class Signal:
+    def __init__(self, sig: str = "TERM"):
+        self.signal = SIGNAL_MAP.get(sig, signal.SIGTERM)
 
 
 class Status(str, Enum):
@@ -44,14 +51,18 @@ class Process:
     exitcodes: List[int]
     status: Status = Status.STOPPED
     process: subprocess.CompletedProcess = None
-    kill_signal: Signal = Signal.TERM
+    kill_signal: Signal = Signal("TERM")
     returncode: int = None
     retries: int = 0
     max_retries: int = 3
     pid: int = None
     starttime: int = 0
+    stoptime: int = 0
+    stopflag: bool = False
 
     def start(self):
+        if self.stopflag:
+            return
         self.status = Status.RUNNING
         try:
             time.sleep(self.starttime)
@@ -95,15 +106,24 @@ class Process:
             self.status = Status.FATAL
 
     def kill(self):
-        if self.process:
-            os.kill(self.process.pid, self.kill_signal)
+        self.stopflag = True
+        # poll() returns None if the process is still running
+        if self.process and self.process.poll() is None:
+            start_time = time.time()
+            while time.time() - start_time < self.stoptime:
+                time.sleep(0.5)
+            os.kill(self.process.pid, self.kill_signal.signal)
             self.status = Status.STOPPED
+            self.process = None
             logger.info(f"Process {self.name} killed")
         else:
             logger.info(f"Process {self.name} is already stopped")
 
     def __str__(self):
-        return f"{self.name}: {self.status} pid {self.process.pid} ({self.returncode})"
+        if self.process:
+            return f"{self.name}: {self.status} pid {self.process.pid} ({self.returncode})"
+        else:
+            return f"{self.name}: {self.status}"
 
 
 @dataclass
@@ -118,7 +138,7 @@ class Task(YamlDataClassConfig):
     exitcodes: List[int] = field(default_factory=lambda: [0, 1])
     startretries: int = 3
     starttime: int = 0
-    stopsignal: Signal = Signal.TERM
+    stopsignal: Signal = Signal("TERM")
     stoptime: int = 10
     stdout: str = "/dev/null"
     stderr: str = "/dev/null"
@@ -152,6 +172,8 @@ class Task(YamlDataClassConfig):
                     exitcodes=self.exitcodes,
                     kill_signal=self.stopsignal,
                     starttime=self.starttime,
+                    stoptime=self.stoptime,
+                    stopflag=False,
                 )
                 # Start the process
                 self.threads[process_id] = Thread(
@@ -173,21 +195,14 @@ class Task(YamlDataClassConfig):
             # Wait for process to stop
             for process_id in range(self.numprocs):
                 if not self.process or not self.process[process_id]:
-                    logger.info(
+                    logger.debug(
                         f"Process {self.name}-{process_id} is already stopped"
                     )
-                    self.status[process_id] = Status.STOPPED
                     continue
                 logger.debug(f"Stopping process {self.name}-{process_id}")
-                start_time = time.time()
-                while time.time() - start_time < self.stoptime:
-                    if self.process[process_id] is not None:
-                        self.process[process_id].kill()
-                        self.threads[process_id].join(timeout=0.5)
-                        self.status[process_id] = Status.STOPPED
-                        self.process[process_id] = None
-                        break
-                    time.sleep(0.5)
+                self.process[process_id].kill()
+                self.threads[process_id].join(timeout=0.5)
+                self.process[process_id] = None
             self.process = None
 
         except Exception as e:
@@ -201,10 +216,7 @@ class Task(YamlDataClassConfig):
     def get_status(self):
         for process_id in range(self.numprocs):
             print(
-                f"Status: {self.name}-{process_id}: {self.process[process_id].status}"
-            )
-            print(
-                f"Repr: {self.name}-{process_id}: {self.process[process_id]}"
+                f"Repr: {self.process[process_id]}"
             )
 
 
