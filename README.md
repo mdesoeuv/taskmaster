@@ -7,16 +7,16 @@
 - Kill : OK -> valider en testant differents signals
 - Stop Delay : changer en timeout de thread join apres avoir envoye le signal specifie
 - exit code et retries : Mehdi : OK -> valider
-- Ajouter un handler de type file pour le logger (doit logger les actions du programme)
-- Ajouter un historique dans la ligne de commande
+- Ajouter un handler de type file pour le logger (doit logguer les actions du programme)
+- Ajouter un historique dans la ligne de commande : Victor
 - Etude de supervisord -> Verifier le comportement des toutes les commandes du sujet
 - 
-- Valider le comportement du restart vis a vis des retries and l'implementer
-- Tester le CWD
-- Gestion de l'ecriture dans la console avec le multi-threading
-- Mise en forme de la verbose avec un niveau INFO correspondant a supervisord
+- Valider le comportement du restart vis a vis des retries and l'implementer (remettre les valeurs a 0 lors du restart) : Victor
+- Tester le CWD : Mehdi
+- Gestion de l'ecriture dans la console avec le multi-threading : Victor
+- Mise en forme de la verbose avec un niveau INFO correspondant a supervisord : Victor
 - Reload sans tuer les process si les parametres critiques sont constants ou qu'il s'agit d'augmenter le nombre de process
-- Valider le umask + documenter
+- Valider le umask + documenter : Mehdi
 - Interpreter le stopsignal "USR1" de la config exemple du sujet
 - Gestion des parametres d'autorestart "unexpected, always, never" : Mehdi
 - Documentation 
