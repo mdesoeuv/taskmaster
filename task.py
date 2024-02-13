@@ -5,6 +5,7 @@ import time
 from typing import List, Dict
 from enum import Enum
 from yamldataclassconfig.config import YamlDataClassConfig
+from threading import Thread
 
 logger = logging.getLogger("taskmaster: " + __name__)
 logging.basicConfig()
@@ -30,6 +31,82 @@ class Status(str, Enum):
 
 
 @dataclass
+class Process:
+    name: str
+    cmd: str
+    cwd: str
+    env: dict
+    umask: str
+    stdout: str
+    stderr: str
+    exitcodes: List[int]
+    status: Status = Status.STOPPED
+    process: subprocess.CompletedProcess = None
+    returncode: int = None
+    retries: int = 0
+    max_retries: int = 3
+
+    def start(self):
+        self.status = Status.RUNNING
+        try:
+            self.process = subprocess.run(
+                self.cmd.split(),
+                shell=False,
+                text=True,
+                stdout=open(self.stdout, "w"),
+                stderr=open(self.stderr, "w"),
+                cwd=self.cwd,
+                umask=self.umask,
+                env=self.env,
+            )
+            self.returncode = self.process.returncode
+            self.status = Status.EXITED
+            logger.debug(
+                f"Process {self.name} exited with code {self.returncode}"
+            )
+            if self.returncode not in self.exitcodes:
+                logger.error(
+                    f"Process {self.name} exited with unexepected code {self.returncode} not in {self.exitcodes}"
+                )
+                self.status = Status.FATAL
+                self.retry()
+        except Exception as e:
+            self.status = Status.FATAL
+            logger.error(f"Error starting process: {e}")
+            self.retry()
+
+    # def stop(self):
+    #     if self.process:
+    #         self.process.terminate()
+    #         self.status = Status.STOPPED
+    #         logger.info(f"Process {self.name} stopped")
+    #     else:
+    #         logger.info(f"Process {self.name} is already stopped")
+
+    def retry(self):
+        if self.retries < self.max_retries:
+            self.retries += 1
+            logger.info(
+                f"Retrying process {self.name} ({self.retries}/{self.max_retries})"
+            )
+            self.start()
+        else:
+            logger.error(f"Max retries reached for process {self.name}")
+            self.status = Status.FATAL
+
+    def kill(self):
+        if self.process:
+            self.process.kill()
+            self.status = Status.STOPPED
+            logger.info(f"Process {self.name} killed")
+        else:
+            logger.info(f"Process {self.name} is already stopped")
+
+    def __str__(self):
+        return f"{self.name}: {self.status} pid {self.process.pid} ({self.returncode})"
+
+
+@dataclass
 class Task(YamlDataClassConfig):
     name: str
     cmd: str
@@ -46,43 +123,39 @@ class Task(YamlDataClassConfig):
     stdout: str = "/dev/null"
     stderr: str = "/dev/null"
     env: dict = None
-    process: Dict[int, subprocess.Popen] = field(
-        init=False, default_factory=dict
-    )
+    process: Dict[int, Process] = field(init=False, default_factory=dict)
     retries: int = 0
     status: Dict[int, Status] = field(init=False)
+    threads: Dict[int, Thread] = field(init=False)
 
     def __post_init__(self):
         self.status = {i: Status.STOPPED for i in range(self.numprocs)}
+        self.threads = {i: None for i in range(self.numprocs)}
 
     def start(self):
         logger.info(f"Starting task {self.name}")
-        if self.process:
-            logger.info(f"Task {self.name} is already running")
-            return
         errors = 0
         for process_id in range(self.numprocs):
             try:
-                # print(self)
-                # Environment variables setup todo
-
                 # Wait for the process to start successfully
+                logger.debug(f"Starting process {self.name}-{process_id}")
                 time.sleep(self.starttime)
 
-                logger.info(f"Starting process {self.name}-{process_id}")
-                # Start the process
-
-                self.process[process_id] = subprocess.Popen(
-                    self.cmd.split(),
-                    shell=False,
-                    text=True,
-                    stdout=open(self.stdout, "w"),
-                    stderr=open(self.stderr, "w"),
+                self.process[process_id] = Process(
+                    name=f"{self.name}-{process_id}",
+                    cmd=self.cmd,
                     cwd=self.workingdir,
-                    umask=self.umask,
                     env=self.env,
+                    umask=self.umask,
+                    stdout=self.stdout,
+                    stderr=self.stderr,
+                    exitcodes=self.exitcodes,
                 )
-                self.status[process_id] = Status.RUNNING
+                # Start the process
+                self.threads[process_id] = Thread(
+                    target=self.process[process_id].start, args=()
+                )
+                self.threads[process_id].start()
             except Exception as e:
                 # Handle errors in process starting
                 logger.error(f"Error starting process: {e}")
@@ -91,37 +164,31 @@ class Task(YamlDataClassConfig):
         logger.info(
             f"Task {self.name}: {self.numprocs - errors}/{self.numprocs} started successfully"
         )
-        # try:
-        #     for process in self.process.values():
-        #         res = process.wait()
-        #         result = process.returncode
-        #         print(f"exit code: {result}")
-        # except Exception as e:
-        #     logger.error(f"Error: {e}")
 
     def stop(self):
         logger.info(f"Stopping task {self.name}")
-        for process_id in range(self.numprocs):
-            if (
-                not self.process
-                or not self.process[process_id]
-                or not self.process[process_id].poll()
-            ):
-                logger.info(f"Process {self.name} is already stopped")
-                self.status[process_id] = Status.STOPPED
-                self.process = None
-                return
-            try:
-                # Wait for process to stop
+        try:
+            # Wait for process to stop
+            for process_id in range(self.numprocs):
+                if not self.process or not self.process[process_id]:
+                    logger.info(
+                        f"Process {self.name}-{process_id} is already stopped"
+                    )
+                    self.status[process_id] = Status.STOPPED
+                    continue
+                logger.debug(f"Stopping process {self.name}-{process_id}")
                 start_time = time.time()
                 while time.time() - start_time < self.stoptime:
-                    if self.process is not None:
-                        return  # Process stopped gracefully
+                    if self.process[process_id] is not None:
+                        self.threads[process_id].join(timeout=0.5)
+                        self.status[process_id] = Status.STOPPED
+                        self.process[process_id] = None
+                        break
                     time.sleep(0.5)
-                # Force kill the process
-                self.process.kill()
-            except Exception as e:
-                logger.error(f"Error stopping process: {e}")
+            self.process = None
+
+        except Exception as e:
+            logger.error(f"Error stopping process: {e}")
         logger.info(f"Task {self.name} stopped successfully")
 
     def restart(self):
@@ -130,7 +197,9 @@ class Task(YamlDataClassConfig):
 
     def get_status(self):
         for process_id in range(self.numprocs):
-            print(f"{self.name}-{process_id}: {self.status[process_id]}")
+            print(
+                f"{self.name}-{process_id}: {self.process[process_id].status}"
+            )
 
 
 def execution_callback(task: Task):
