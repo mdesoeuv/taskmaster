@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+import os
 import logging
 import subprocess
 import time
@@ -6,6 +7,7 @@ from typing import List, Dict
 from enum import Enum
 from yamldataclassconfig.config import YamlDataClassConfig
 from threading import Thread
+
 
 logger = logging.getLogger("taskmaster: " + __name__)
 logging.basicConfig()
@@ -42,14 +44,16 @@ class Process:
     exitcodes: List[int]
     status: Status = Status.STOPPED
     process: subprocess.CompletedProcess = None
+    kill_signal: Signal = Signal.TERM
     returncode: int = None
     retries: int = 0
     max_retries: int = 3
+    pid: int = None
 
     def start(self):
         self.status = Status.RUNNING
         try:
-            self.process = subprocess.run(
+            self.process = subprocess.Popen(
                 self.cmd.split(),
                 shell=False,
                 text=True,
@@ -59,6 +63,8 @@ class Process:
                 umask=self.umask,
                 env=self.env,
             )
+            self.pid = self.process.pid
+            self.process.wait()
             self.returncode = self.process.returncode
             self.status = Status.EXITED
             logger.debug(
@@ -88,7 +94,7 @@ class Process:
 
     def kill(self):
         if self.process:
-            self.process.kill()
+            os.kill(self.process.pid, self.kill_signal)
             self.status = Status.STOPPED
             logger.info(f"Process {self.name} killed")
         else:
@@ -173,6 +179,7 @@ class Task(YamlDataClassConfig):
                 start_time = time.time()
                 while time.time() - start_time < self.stoptime:
                     if self.process[process_id] is not None:
+                        self.process[process_id].kill()
                         self.threads[process_id].join(timeout=0.5)
                         self.status[process_id] = Status.STOPPED
                         self.process[process_id] = None
@@ -193,7 +200,9 @@ class Task(YamlDataClassConfig):
             print(
                 f"Status: {self.name}-{process_id}: {self.process[process_id].status}"
             )
-            print(f"Repr: {self.name}-{process_id}: {self.process[process_id]}")
+            print(
+                f"Repr: {self.name}-{process_id}: {self.process[process_id]}"
+            )
 
 
 def execution_callback(task: Task):
