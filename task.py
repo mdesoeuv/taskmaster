@@ -61,12 +61,12 @@ class Process:
     stderr: str
     autorestart: AutoRestart
     exitcodes: List[int]
+    startretries: int
     status: Status = Status.STOPPED
     process: subprocess.CompletedProcess = None
-    kill_signal: Signal = Signal("TERM")
+    stopsignal: Signal = Signal("TERM")
     returncode: int = None
     retries: int = 0
-    max_retries: int = 3
     pid: int = None
     starttime: int = 0
     stoptime: int = 0
@@ -110,10 +110,10 @@ class Process:
     def retry(self):
         if self.autorestart == AutoRestart.false:
             return
-        if self.retries < self.max_retries:
+        if self.retries < self.startretries:
             self.retries += 1
             logger.info(
-                f"Retrying process {self.name} ({self.retries}/{self.max_retries})"
+                f"Retrying process {self.name} ({self.retries}/{self.startretries})"
             )
             self.start()
         else:
@@ -129,9 +129,8 @@ class Process:
             start_time = time.time()
             while time.time() - start_time < self.stoptime:
                 time.sleep(0.5)
-            os.kill(self.process.pid, self.kill_signal.signal)
+            os.kill(self.process.pid, self.stopsignal.signal)
             self.status = Status.STOPPED
-            self.process = None
             logger.info(f"Process {self.name} killed")
         else:
             logger.info(f"Process {self.name} is already stopped")
@@ -187,11 +186,12 @@ class Task(YamlDataClassConfig):
                     stdout=self.stdout,
                     stderr=self.stderr,
                     exitcodes=self.exitcodes,
-                    kill_signal=self.stopsignal,
+                    stopsignal=self.stopsignal,
                     starttime=self.starttime,
                     stoptime=self.stoptime,
                     stopflag=False,
                     autorestart=self.autorestart,
+                    startretries=self.startretries
                 )
                 # Start the process
                 self.threads[process_id] = Thread(
@@ -220,8 +220,6 @@ class Task(YamlDataClassConfig):
                 logger.debug(f"Stopping process {self.name}-{process_id}")
                 self.process[process_id].kill()
                 self.threads[process_id].join(timeout=0.5)
-                self.process[process_id] = None
-            self.process = None
 
         except Exception as e:
             logger.error(f"Error stopping process: {e}")
@@ -233,4 +231,7 @@ class Task(YamlDataClassConfig):
 
     def get_status(self):
         for process_id in range(self.numprocs):
-            print(f"Repr: {self.process[process_id]}")
+            if self.process[process_id]:
+                print(f"Repr: {self.process[process_id]}")
+            else:
+                print(f"{self.name}-{process_id}: UNKNOWN")
