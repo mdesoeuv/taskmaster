@@ -5,6 +5,7 @@ from actions import (
     find_task_in_list,
     exit_action,
     reload_config_file,
+    show_status
 )
 from task import Task
 
@@ -46,7 +47,7 @@ def command_interpreter(command: str):
         case "restart":
             task.restart()
         case "status":
-            task.get_status()
+            show_status(task_list)
         case "reload":
             task_list = reload_config_file(config_file_path, task_list)
         case "exit":
