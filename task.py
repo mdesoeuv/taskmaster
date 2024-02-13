@@ -49,10 +49,12 @@ class Process:
     retries: int = 0
     max_retries: int = 3
     pid: int = None
+    starttime: int = 0
 
     def start(self):
         self.status = Status.RUNNING
         try:
+            time.sleep(self.starttime)
             self.process = subprocess.Popen(
                 self.cmd.split(),
                 shell=False,
@@ -138,7 +140,6 @@ class Task(YamlDataClassConfig):
             try:
                 # Wait for the process to start successfully
                 logger.debug(f"Starting process {self.name}-{process_id}")
-                time.sleep(self.starttime)
 
                 self.process[process_id] = Process(
                     name=f"{self.name}-{process_id}",
@@ -149,6 +150,8 @@ class Task(YamlDataClassConfig):
                     stdout=self.stdout,
                     stderr=self.stderr,
                     exitcodes=self.exitcodes,
+                    kill_signal=self.stopsignal,
+                    starttime=self.starttime,
                 )
                 # Start the process
                 self.threads[process_id] = Thread(
