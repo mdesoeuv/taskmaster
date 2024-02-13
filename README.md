@@ -1,7 +1,7 @@
 # taskmaster
 
-- Commande Reload : Victor TO TEST 
-- SIGHUP launches reload_config_file using config_file_path, task_list as globals Victor
+- Commande Reload : OK
+- SIGHUP : OK
 - Start Delay : Mehdi Comparer avec supervisor sleep
 - Task Status : Mehdi
 - Kill 
