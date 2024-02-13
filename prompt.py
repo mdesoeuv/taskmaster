@@ -13,10 +13,12 @@ logging.basicConfig()
 logger.setLevel(logging.DEBUG)
 
 task_list: List[Task] = []
+config_file_path: str = ""
 
 
-def command_interpreter(command: str, config_file_path: str):
+def command_interpreter(command: str):
     global task_list
+    global config_file_path
     command = command.split()
     if len(command) == 0:
         return
@@ -62,10 +64,20 @@ def sigint_handler(signum: signal.Signals, frame):
     exit_action(task_list)
 
 
-def prompt(start_task_list: list[Task], config_file_path: str):
+def sighup_handler(signum: signal.Signals, frame):
     global task_list
+    global config_file_path
+    logger.info("\nSIGHUP received !")
+    task_list = reload_config_file(config_file_path, task_list)
+
+
+def prompt(start_task_list: list[Task], start_config_file_path: str):
+    global task_list
+    global config_file_path
     task_list = start_task_list
+    config_file_path = start_config_file_path
     signal.signal(signal.SIGINT, sigint_handler)
+    signal.signal(signal.SIGHUP, sighup_handler)
     while True:
         command = input(">>> ")
-        command_interpreter(command, config_file_path)
+        command_interpreter(command)
