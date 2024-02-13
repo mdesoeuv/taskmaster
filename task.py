@@ -22,7 +22,7 @@ SIGNAL_MAP = {
     "QUIT": signal.SIGQUIT,
     "KILL": signal.SIGKILL,
     "USR1": signal.SIGUSR1,
-    "USR2": signal.SIGUSR2
+    "USR2": signal.SIGUSR2,
 }
 
 
@@ -43,8 +43,8 @@ class Status(str, Enum):
 
 class AutoRestart(str, Enum):
     unexpected = "unexpected"
-    always = "always"
-    never = "never"
+    true = "true"
+    false = "false"
 
     def __str__(self) -> str:
         return self.value
@@ -100,19 +100,17 @@ class Process:
                     f"Process {self.name} exited with unexepected code {self.returncode} not in {self.exitcodes}"
                 )
                 self.status = Status.FATAL
-                if self.autorestart == AutoRestart.unexpected:
+                if self.autorestart != AutoRestart.false:
                     self.retry()
         except Exception as e:
             self.status = Status.FATAL
             logger.error(f"Error starting process: {e}")
-            if self.autorestart != AutoRestart.never:
-                self.retry()
+            self.retry()
 
     def retry(self):
-        if (
-            self.retries < self.max_retries
-            and self.autorestart != AutoRestart.never
-        ):
+        if self.autorestart == AutoRestart.false:
+            return
+        if self.retries < self.max_retries:
             self.retries += 1
             logger.info(
                 f"Retrying process {self.name} ({self.retries}/{self.max_retries})"

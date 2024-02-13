@@ -50,7 +50,7 @@ def define_tasks(config: dict):
                 umask=prog.get("umask"),
                 workingdir=prog.get("workingdir"),
                 autostart=prog.get("autostart"),
-                autorestart=AutoRestart(prog.get("autorestart")),
+                autorestart=AutoRestart(str(prog.get("autorestart")).lower()),
                 exitcodes=prog.get("exitcodes"),
                 startretries=prog.get("startretries"),
                 starttime=prog.get("starttime"),
