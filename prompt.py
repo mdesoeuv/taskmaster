@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import signal
 from typing import List
@@ -5,7 +6,7 @@ from actions import (
     find_task_in_list,
     exit_action,
     reload_config_file,
-    show_status
+    show_status,
 )
 from task import Task
 
@@ -17,13 +18,13 @@ task_list: List[Task] = []
 config_file_path: str = ""
 
 
-def command_interpreter(command: str):
+async def command_interpreter(command: str):
     global task_list
     global config_file_path
     command = command.split()
     if len(command) == 0:
         return
-    if len(command) == 1 and command[0] in ["exit", "reload"]:
+    if len(command) == 1 and command[0] in ["exit", "reload", "status"]:
         action = command[0]
     elif len(command) == 1:
         logger.info("Not enough arguments. usage: command [task_name]")
@@ -41,17 +42,21 @@ def command_interpreter(command: str):
 
     match action:
         case "start":
-            task.start()
+            await task.start()
         case "stop":
-            task.stop()
+            await task.stop()
         case "restart":
-            task.restart()
+            await task.restart()
         case "status":
-            show_status(task_list)
+            show_status(
+                task_list
+            )  # Assuming show_status is synchronous. If not, add await.
         case "reload":
             task_list = reload_config_file(config_file_path, task_list)
         case "exit":
-            exit_action(task_list)
+            exit_action(
+                task_list
+            )  # Assuming exit_action is synchronous. If not, add await.
         case _:
             logger.info(
                 f"Unknown command: `{action}` (Available commands: "
@@ -59,26 +64,36 @@ def command_interpreter(command: str):
             )
 
 
-def sigint_handler(signum: signal.Signals, frame):
+async def async_input(prompt):
+    print(prompt, end="", flush=True)
+    return await asyncio.get_event_loop().run_in_executor(None, input)
+
+
+async def signal_handler(name):
     global task_list
-    logger.info("\nSIGINT received, stopping...")
-    exit_action(task_list)
+    logger.info(f"\n{name} received !")
+    if name == "SIGINT":
+        exit_action(
+            task_list
+        )  # Assuming exit_action is synchronous. If not, make it async and await it.
+    elif name == "SIGHUP":
+        task_list = reload_config_file(
+            config_file_path, task_list
+        )  # Assuming synchronous. If not, await it.
 
 
-def sighup_handler(signum: signal.Signals, frame):
-    global task_list
-    global config_file_path
-    logger.info("\nSIGHUP received !")
-    task_list = reload_config_file(config_file_path, task_list)
-
-
-def prompt(start_task_list: list[Task], start_config_file_path: str):
+async def prompt(start_task_list: list[Task], start_config_file_path: str):
     global task_list
     global config_file_path
     task_list = start_task_list
     config_file_path = start_config_file_path
-    signal.signal(signal.SIGINT, sigint_handler)
-    signal.signal(signal.SIGHUP, sighup_handler)
+    loop = asyncio.get_event_loop()
+    for signame in ("SIGINT", "SIGHUP"):
+        loop.add_signal_handler(
+            getattr(signal, signame),
+            lambda: asyncio.create_task(signal_handler(signame)),
+        )
+
     while True:
-        command = input(">>> ")
-        command_interpreter(command)
+        command = await async_input(">>> ")
+        await command_interpreter(command)

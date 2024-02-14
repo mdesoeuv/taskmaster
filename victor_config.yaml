@@ -1,0 +1,41 @@
+programs:
+
+  ls:
+    cmd: "/bin/ls -l"
+    numprocs: 3
+    umask: 022
+    workingdir: /Users/victorchevillotte/Documents/42/taskmaster
+    autostart: true
+    autorestart: unexpected
+    exitcodes:
+    - 0
+    - 2
+    startretries: 3
+    starttime: 0
+    stopsignal: TERM
+    stoptime: 1
+    stdout: /Users/victorchevillotte/Documents/42/taskmaster/logs/ls.stdout
+    stderr: /Users/victorchevillotte/Documents/42/taskmaster/logs/ls.stderr
+    env:
+      STARTED_BY: taskmaster
+      ANSWER: 42
+
+  ping :
+    cmd: "ping -c 10000 192.0.2.0"
+    numprocs: 3
+    umask: 022
+    workingdir: /Users/victorchevillotte/Documents/42/taskmaster
+    autostart: true
+    autorestart: unexpected
+    exitcodes:
+    - 0
+    - 2
+    startretries: 3
+    starttime: 10
+    stopsignal: TERM
+    stoptime: 1
+    stdout: /Users/victorchevillotte/Documents/42/taskmaster/logs/ls.stdout
+    stderr: /Users/victorchevillotte/Documents/42/taskmaster/logs/ls.stderr
+    env:
+      STARTED_BY: taskmaster
+      ANSWER: 42

@@ -109,3 +109,8 @@ def reload_config_file(
     except (TaskDefinitionError, ConfigError) as e:
         print(f"Error reloading config file: {e}")
     return updated_task_list
+
+
+def show_status(task_list: list[Task]):
+    for task in task_list:
+        print(task.get_status())

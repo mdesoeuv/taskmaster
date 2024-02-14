@@ -1,20 +1,17 @@
-from dataclasses import dataclass, field
+import asyncio
 import os
 import logging
-import subprocess
-import time
-import signal
+from dataclasses import dataclass, field
 from typing import List, Dict
 from enum import Enum
+import subprocess
+import signal
 from yamldataclassconfig.config import YamlDataClassConfig
 from threading import Thread
-from exceptions import ProcessException
-
 
 logger = logging.getLogger("taskmaster: " + __name__)
 logging.basicConfig()
 logger.setLevel(logging.DEBUG)
-
 
 SIGNAL_MAP = {
     "TERM": signal.SIGTERM,
@@ -39,17 +36,11 @@ class Status(str, Enum):
     EXITED = "EXITED"
     FATAL = "FATAL"
 
-    def __str__(self) -> str:
-        return self.value
-
 
 class AutoRestart(str, Enum):
     unexpected = "unexpected"
     true = "true"
     false = "false"
-
-    def __str__(self) -> str:
-        return self.value
 
 
 @dataclass
@@ -67,91 +58,77 @@ class Process:
     starttime: int
     stoptime: int
     status: Status = Status.STOPPED
-    process: subprocess.CompletedProcess = None
+    process: subprocess.Popen = None
     stopsignal: Signal = Signal("TERM")
     returncode: int = None
     retries: int = 0
     pid: int = None
     stopflag: bool = False
 
-    def start(self):
+    async def start(self):
         if self.stopflag:
             return
         try:
             self.status = Status.STARTING
-            time.sleep(self.starttime)
+            await asyncio.sleep(self.starttime)
             self.process = subprocess.Popen(
                 self.cmd.split(),
                 shell=False,
-                text=True,
                 stdout=open(self.stdout, "w"),
                 stderr=open(self.stderr, "w"),
                 cwd=self.cwd,
-                umask=self.umask,
                 env=self.env,
             )
             self.pid = self.process.pid
-            start = time.time()
-            while time.time() - start < self.starttime:
-                if self.process.poll() is not None:
-                    raise ProcessException("Process exited before starting")
-                time.sleep(0.1)
             logger.debug(f"Process {self.name} started with pid {self.pid}")
             self.status = Status.RUNNING
-            self.process.wait()
-            self.returncode = self.process.returncode
-            logger.debug(
-                f"Process {self.name} exited with code {self.returncode}"
-            )
-            if self.returncode not in self.exitcodes:
-                logger.error(
-                    f"Process {self.name} exited with unexepected code {self.returncode} not in {self.exitcodes}"
-                )
-                self.status = Status.FATAL
-                if self.autorestart == AutoRestart.unexpected:
-                    self.retry()
-            else:
-                self.status = Status.EXITED
-                if self.autorestart == AutoRestart.true:
-                    self.retry()
+            await self.monitor_process()
         except Exception as e:
             self.status = Status.FATAL
             logger.error(f"Error starting process: {e}")
             self.retry()
 
-    def retry(self):
-        if self.autorestart == AutoRestart.false:
-            return
-        if self.retries < self.startretries:
-            self.retries += 1
-            logger.info(
-                f"Retrying process {self.name} ({self.retries}/{self.startretries})"
+    async def monitor_process(self):
+        self.returncode = await asyncio.wait_for(self.process.wait(), None)
+        logger.debug(f"Process {self.name} exited with code {self.returncode}")
+        if self.returncode not in self.exitcodes:
+            logger.error(
+                f"Process {self.name} exited with unexpected code {self.returncode}"
             )
-            self.start()
+            self.status = Status.FATAL
+            if self.autorestart == AutoRestart.unexpected:
+                self.retry()
         else:
+            self.status = Status.EXITED
+            if self.autorestart == AutoRestart.true:
+                self.retry()
+
+    def retry(self):
+        if (
+            self.autorestart == AutoRestart.false
+            or self.retries >= self.startretries
+        ):
             logger.error(f"Max retries reached for process {self.name}")
             self.status = Status.FATAL
+            return
+        self.retries += 1
+        logger.info(
+            f"Retrying process {self.name} ({self.retries}/{self.startretries})"
+        )
+        asyncio.create_task(self.start())
 
-    def kill(self):
-
+    async def kill(self):
         self.stopflag = True
-
-        # poll() returns None if the process is still running
         if self.process and self.process.poll() is None:
-            start_time = time.time()
-            while time.time() - start_time < self.stoptime:
-                time.sleep(0.5)
-            os.kill(self.process.pid, self.stopsignal.signal)
+            self.process.terminate()
+            try:
+                await asyncio.wait_for(self.process.wait(), self.stoptime)
+            except asyncio.TimeoutError:
+                os.kill(self.process.pid, self.stopsignal.signal)
             self.status = Status.STOPPED
             logger.info(f"Process {self.name} killed")
         else:
             logger.info(f"Process {self.name} is already stopped")
-
-    def __str__(self):
-        if self.process:
-            return f"{self.name}: {self.status} pid {self.process.pid} ({self.returncode})"
-        else:
-            return f"{self.name}: {self.status}"
 
 
 @dataclass
@@ -244,6 +221,6 @@ class Task(YamlDataClassConfig):
     def get_status(self):
         for process_id in range(self.numprocs):
             if self.process.get(process_id):
-                print(f"Repr: {self.process[process_id]}")
+                print(self.process[process_id])
             else:
                 print(f"{self.name}-{process_id}: STOPPED")
