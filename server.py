@@ -11,9 +11,9 @@ def handle_client(conn, addr):
             if not data:
                 break  # Break the loop if no data is sent by the client.
             response = (
-                "pong"
-                if data == "ping"
-                else "ping" if data == "pong" else "Unrecognized command"
+                "status"
+                if data == "status"
+                else "start" if data == "start" else "Unrecognized command"
             )
             conn.sendall(response.encode())
     print(f"Connection with {addr} closed.")
@@ -31,5 +31,5 @@ def start_server(address: Tuple[str, int]) -> None:
 
 if __name__ == "__main__":
     HOST = "127.0.0.1"  # Standard loopback interface address (localhost)
-    PORT = 65432  # Port to listen on (non-privileged ports are > 1023)
+    PORT = 65433  # Port to listen on (non-privileged ports are > 1023)
     start_server((HOST, PORT))

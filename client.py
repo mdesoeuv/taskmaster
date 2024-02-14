@@ -46,5 +46,5 @@ def send_command(address: Tuple[str, int]) -> None:
 
 if __name__ == "__main__":
     HOST = "127.0.0.1"  # The server's hostname or IP address
-    PORT = 65432  # The port used by the server
+    PORT = 65433  # The port used by the server
     send_command((HOST, PORT))
