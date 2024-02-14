@@ -62,7 +62,6 @@ async def define_process_groups(
                 stderr=prog.get("stderr"),
                 env=format_env(prog.get("env", {})),
             )
-            print("task created")
             if process_group.autostart:
                 await process_group.start()
         except Exception as e:

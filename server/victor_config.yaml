@@ -5,7 +5,7 @@ programs:
     numprocs: 3
     umask: 022
     workingdir: /Users/victorchevillotte/Documents/42/taskmaster
-    autostart: true
+    autostart: false
     autorestart: unexpected
     exitcodes:
     - 0
@@ -21,11 +21,11 @@ programs:
       ANSWER: 42
 
   ping :
-    cmd: "ping -c 10000 192.0.2.0"
+    cmd: "/sbin/ping -c 10000 192.0.2.0"
     numprocs: 3
     umask: 022
     workingdir: /Users/victorchevillotte/Documents/42/taskmaster
-    autostart: false
+    autostart: true
     autorestart: unexpected
     exitcodes:
     - 0
