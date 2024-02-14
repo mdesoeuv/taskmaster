@@ -1,7 +1,7 @@
 import logging
-from server.process import ProcessGroup
+from process_group import ProcessGroup
 import pathlib
-from server.config_parser import (
+from config_parser import (
     config_file_parser,
     TaskDefinitionError,
     ConfigError,
@@ -13,31 +13,24 @@ logging.basicConfig()
 logger.setLevel(logging.DEBUG)
 
 
-def find_task_in_list(task_name: str, task_list: list[ProcessGroup]):
-    for task in task_list:
-        if task.name == task_name:
-            return task
+def find_process_in_list(
+    process_group_name: str, process_group_list: list[ProcessGroup]
+):
+    for process in process_group_list:
+        if process.name == process_group_name:
+            return process
     return None
 
 
-def exit_action(task_list: list[ProcessGroup]):
-    logger.info("Exiting all tasks...")
-    for task in task_list:
-        task.stop()
+def exit_action(process_groups: list[ProcessGroup]):
+    logger.info("Exiting all processes...")
+    for process_group in process_groups:
+        process_group.stop()
     exit(0)
 
 
-def is_task_in_list(task_list: list[ProcessGroup], task_name: str) -> bool:
-    res: bool = False
-    for task in task_list:
-        if task.name == task_name:
-            res = True
-            break
-    return res
-
-
-def are_tasks_different(
-    old_task: ProcessGroup, new_task: ProcessGroup
+def are_process_groups_different(
+    old_process_group: ProcessGroup, new_process_group: ProcessGroup
 ) -> bool:
     # Compare only the specified attributes
     attrs_to_compare = [
@@ -59,8 +52,8 @@ def are_tasks_different(
     ]
 
     for attr in attrs_to_compare:
-        old_attr = getattr(old_task, attr)
-        new_attr = getattr(new_task, attr)
+        old_attr = getattr(old_process_group, attr)
+        new_attr = getattr(new_process_group, attr)
         if old_attr != new_attr:
             return True
 
@@ -68,51 +61,59 @@ def are_tasks_different(
 
 
 def reload_config_file(
-    file_path: str, old_task_list: list[ProcessGroup]
+    file_path: str, old_process_groups: list[ProcessGroup]
 ) -> list[ProcessGroup]:
     logger.info("Reloading config file...")
-    updated_task_list = []
+    updated_process_group_list = []
     try:
         new_config = config_file_parser(pathlib.Path(file_path))
-        new_tasks_list = define_process_groups(new_config)
+        new_process_group_list = define_process_groups(new_config)
 
-        for old_task in old_task_list:
-            new_task: ProcessGroup | None = find_task_in_list(
-                old_task.name, new_tasks_list
+        for old_process_group in old_process_groups:
+            new_process_group: ProcessGroup | None = find_process_in_list(
+                old_process_group.name, new_process_group_list
             )
-            if new_task:
-                # old task with new config
-                if are_tasks_different(old_task, new_task):
+            if new_process_group:
+                # old process group with new config
+                if are_process_groups_different(
+                    old_process_group, new_process_group
+                ):
                     logger.info(
-                        f"Task {new_task.name} has changed. Reloading task..."
+                        f"Process group {new_process_group.name} has changed. Reloading process group..."
                     )
-                    old_task.stop()
-                    updated_task_list.append(new_task)
-                    new_task.start()
-                    logger.info(f"Task {new_task.name} reloaded")
-                # old task without changes
+                    old_process_group.stop()
+                    updated_process_group_list.append(new_process_group)
+                    new_process_group.start()
+                    logger.info(
+                        f"Process group {new_process_group.name} reloaded"
+                    )
+                # old process group without changes
                 else:
-                    logger.info(f"Task {new_task.name} unchanged")
-                    updated_task_list.append(old_task)
-            # old task that is no longer in config
+                    logger.info(
+                        f"Process group {new_process_group.name} unchanged"
+                    )
+                    updated_process_group_list.append(old_process_group)
+            # old process group that is no longer in config
             else:
-                old_task.stop()
-        # new tasks which where not in old task list
-        for new_task in new_tasks_list:
-            updated_task: ProcessGroup | None = find_task_in_list(
-                new_task.name, updated_task_list
+                old_process_group.stop()
+        # new process groups which where not in old process group list
+        for new_process_group in new_process_group_list:
+            updated_process_group: ProcessGroup | None = find_process_in_list(
+                new_process_group.name, updated_process_group_list
             )
-            if not updated_task:
-                logger.info(f"New task {new_task.name} to add")
-                updated_task_list.append(new_task)
-                new_task.start()
+            if not updated_process_group:
+                logger.info(
+                    f"New Process group {new_process_group.name} to add"
+                )
+                updated_process_group_list.append(new_process_group)
+                new_process_group.start()
 
         logger.info("Config file reloaded successfully")
     except (TaskDefinitionError, ConfigError) as e:
         print(f"Error reloading config file: {e}")
-    return updated_task_list
+    return updated_process_group_list
 
 
-def show_status(task_list: list[ProcessGroup]):
-    for task in task_list:
-        print(task.get_status())
+def show_status(process_groups: list[ProcessGroup]):
+    for process_group in process_groups:
+        print(process_group.get_status())

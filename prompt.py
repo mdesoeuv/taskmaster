@@ -50,7 +50,7 @@ async def command_interpreter(command: str):
         case "status":
             show_status(
                 task_list
-            )  # Assuming show_status is synchronous. If not, add await.
+            )
         case "reload":
             task_list = reload_config_file(config_file_path, task_list)
         case "exit":
