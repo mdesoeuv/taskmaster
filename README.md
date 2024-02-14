@@ -51,3 +51,8 @@
 91446 ttys015    0:00.01 ps -a
 (.venv) ➜  taskmaster git:(feat/sighup) ✗ kill -HUP 90895
 (.venv) ➜  taskmaster git:(feat/sighup) ✗ 
+
+
+### Local SMTP Server
+
+`python -m smtpd -c DebuggingServer -n localhost:1025`
