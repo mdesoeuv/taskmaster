@@ -6,6 +6,7 @@ from yamldataclassconfig.config import YamlDataClassConfig
 from exceptions import ProcessException
 from process import Process
 from helper import AutoRestart, Status, Signal
+from tools import get_process_name, get_process_uptime
 
 logger = logging.getLogger("taskmaster: " + __name__)
 logging.basicConfig()
@@ -79,13 +80,13 @@ class ProcessGroup(YamlDataClassConfig):
         try:
             # Wait for process to stop
             for process_id in range(self.numprocs):
-                if not self.process or not self.process[process_id]:
+                if not self.processes or not self.processes[process_id]:
                     logger.debug(
                         f"Process {self.name}-{process_id} is already stopped"
                     )
                     continue
                 logger.debug(f"Stopping process {self.name}-{process_id}")
-                self.process[process_id].kill()
+                self.processes[process_id].kill()
 
         except Exception as e:
             logger.error(f"Error stopping process: {e}")
@@ -95,9 +96,12 @@ class ProcessGroup(YamlDataClassConfig):
         self.stop()
         self.start()
 
-    def get_status(self):
+    def get_status(self) -> str:
+        print("Getting status")
         for process_id in range(self.numprocs):
-            if self.process.get(process_id):
-                print(self.process[process_id])
+            if self.processes.get(process_id):
+                pid = self.processes[process_id].process.pid
+                print(pid)
+                return f"{self.name}-{process_id}: RUNNING (pid {pid}), uptime " #{get_process_uptime(pid)}"
             else:
-                print(f"{self.name}-{process_id}: STOPPED")
+                return f"{self.name}-{process_id}: STOPPED"

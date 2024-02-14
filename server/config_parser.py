@@ -38,9 +38,10 @@ def format_env(env: dict) -> dict:
     return formatted
 
 
-async def define_process_groups(config: dict):
+async def define_process_groups(
+    config: dict, process_groups: List[ProcessGroup]
+):
     programs = config["programs"].keys()
-    process_groups = []
     for program in programs:
         prog = config["programs"][program]
         try:
@@ -61,7 +62,6 @@ async def define_process_groups(config: dict):
                 stderr=prog.get("stderr"),
                 env=format_env(prog.get("env", {})),
             )
-            print("task created")
             if process_group.autostart:
                 await process_group.start()
         except Exception as e:
@@ -75,7 +75,7 @@ async def define_process_groups(config: dict):
             raise TaskDefinitionError(
                 "No task defined in the configuration file."
             )
-    return process_group
+    return process_groups
 
 
 def parse_arguments() -> argparse.Namespace:

@@ -1,6 +1,4 @@
 import os
-
-# import psutil
 import time
 
 
@@ -12,6 +10,8 @@ def format_uptime(seconds):
 
 
 def get_process_uptime(pid):
+    print(pid)
+
     # Get the system boot time
     with open("/proc/stat") as f:
         for line in f:
@@ -21,10 +21,12 @@ def get_process_uptime(pid):
 
     # Get the clock ticks per second
     clock_ticks_per_second = os.sysconf(os.sysconf_names["SC_CLK_TCK"])
+    print(clock_ticks_per_second)
 
     # Get the process start time in clock ticks since system boot
     with open(f"/proc/{pid}/stat") as f:
         start_time_ticks = int(f.readline().split()[21])
+    print(start_time_ticks)
 
     # Convert start time to seconds since system boot
     start_time_seconds = start_time_ticks / clock_ticks_per_second
@@ -38,15 +40,8 @@ def get_process_uptime(pid):
     return formated_uptime
 
 
-# def get_process_name(pid):
-#    try:
-#        p = psutil.Process(pid)
-#        return p.name()
-#    except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-#        return None
-
-
 def get_process_name(pid):
+    print(f"Getting process name for pid {pid}")
     try:
         with open(f"/proc/{pid}/cmdline", "r") as f:
             # Cela lit la ligne de commande; pour obtenir juste le nom du processus,
