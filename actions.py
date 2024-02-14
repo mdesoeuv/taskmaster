@@ -1,7 +1,7 @@
 import logging
 from task import Task
 import pathlib
-from config_parser import (
+from server.config_parser import (
     config_file_parser,
     TaskDefinitionError,
     ConfigError,

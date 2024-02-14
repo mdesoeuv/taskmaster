@@ -1,7 +1,7 @@
 import logging
 import pathlib
-from exceptions import TaskException
-from config_parser import config_file_parser, parse_arguments, define_tasks
+from server.exceptions import TaskException
+from server.config_parser import config_file_parser, parse_arguments, define_tasks
 from prompt import prompt
 
 logger = logging.getLogger("taskmaster")

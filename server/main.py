@@ -36,9 +36,7 @@ async def handle_client(
 async def main():
     args = parse_arguments()
     port: int = args.server_port
-    server = await asyncio.start_server(
-        handle_client, "127.0.0.1", port
-    )
+    server = await asyncio.start_server(handle_client, "127.0.0.1", port)
     addr = server.sockets[0].getsockname()
     print(f"Server listening on {addr}")
 
