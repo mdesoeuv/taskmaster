@@ -1,35 +1,54 @@
-# server.py
-import socket
-from typing import Tuple
+import asyncio
+import logging
+import pathlib
+from config_parser import config_file_parser, parse_arguments, define_tasks
+import argparse
+
+logger = logging.getLogger("taskmaster")
+logging.basicConfig()
+logger.setLevel(logging.DEBUG)
 
 
-def handle_client(conn, addr):
-    print(f"Connected by {addr}")
-    with conn:
-        while True:
-            data = conn.recv(1024).decode()
-            if not data:
-                break  # Break the loop if no data is sent by the client.
-            response = (
-                "status"
-                if data == "status"
-                else "start" if data == "start" else "Unrecognized command"
-            )
-            conn.sendall(response.encode())
-    print(f"Connection with {addr} closed.")
+async def manage_tasks(args: argparse.Namespace):
+    config = config_file_parser(pathlib.Path(args.configuration_file_path))
+    print(config)
+    tasks = define_tasks(config)
 
 
-def start_server(address: Tuple[str, int]) -> None:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(address)
-        s.listen()
-        print(f"Listening on {address}")
-        while True:  # Loop forever to accept all incoming connections
-            conn, addr = s.accept()
-            handle_client(conn, addr)  # Handle the client in a function
+async def handle_client(
+    reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+):
+    print("Client connecté")
+    while True:
+        data = await reader.read(100)
+        if not data:
+            break
+        message = data.decode()
+        print(f"Message reçu: {message}")
+        # Logic to handle the message
+        writer.write(data)
+        await writer.drain()
+    print("Fermeture de la connexion client")
+    writer.close()
+    await writer.wait_closed()
 
 
-if __name__ == "__main__":
-    HOST = "127.0.0.1"  # Standard loopback interface address (localhost)
-    PORT = 65433  # Port to listen on (non-privileged ports are > 1023)
-    start_server((HOST, PORT))
+async def main():
+    args = parse_arguments()
+    port: int = args.server_port
+    server = await asyncio.start_server(
+        handle_client, "127.0.0.1", port
+    )
+    addr = server.sockets[0].getsockname()
+    print(f"Server listening on {addr}")
+
+    task = asyncio.create_task(manage_tasks(args))
+
+    async with server:
+        await asyncio.gather(server.serve_forever(), task)
+
+
+try:
+    asyncio.run(main())
+except KeyboardInterrupt:
+    print("Server stopped manually")

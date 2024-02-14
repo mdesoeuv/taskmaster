@@ -74,7 +74,7 @@ def define_tasks(config: dict):
     return tasks
 
 
-def parse_arguments():
+def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Process taskmaster options.")
     parser.add_argument(
         "-c",
@@ -82,6 +82,13 @@ def parse_arguments():
         type=str,
         required=True,
         help="Specify the path of the configuration file.",
+    )
+    parser.add_argument(
+        "-p",
+        dest="server_port",
+        type=str,
+        required=True,
+        help="Specify the port to use for the server.",
     )
     args = parser.parse_args()
     return args

@@ -3,6 +3,7 @@ import socket
 import readline
 from typing import Tuple
 import logging
+from parse_server_port import parse_server_port
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -46,5 +47,5 @@ def send_command(address: Tuple[str, int]) -> None:
 
 if __name__ == "__main__":
     HOST = "127.0.0.1"  # The server's hostname or IP address
-    PORT = 65433  # The port used by the server
+    PORT = parse_server_port()
     send_command((HOST, PORT))
