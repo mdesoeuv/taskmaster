@@ -19,19 +19,40 @@ async def launch_taskmaster(args: argparse.Namespace):
     # create a task group per task and a task per process in the task group
 
 
+async def handle_command(command: str):
+    cmds = command.split()
+    match cmds[0]:
+        case "start":
+            return "Starting task"
+        case "stop":
+            return "Stopping task"
+        case "restart":
+            return "Restarting task"
+        case "status":
+            return "Showing status"
+        case "reload":
+            return "Reloading config"
+        case "shutdown":
+            return "Shutting down"
+        case _:
+            return "Invalid command"
+
+
 async def handle_client(
     reader: asyncio.StreamReader, writer: asyncio.StreamWriter
 ):
     print("Client connected")
+
     while True:
         data = await reader.read(100)
         if not data:
             break
         message = data.decode()
-        print(f"Received {message}")
-        # Logic to handle the message
-        writer.write(data)
-        await writer.drain()
+        print(f"Received: {message}")
+        response = await handle_command(message)
+        if response:
+            writer.write(response.encode())
+            await writer.drain()
     print("Client disconnected")
     writer.close()
     await writer.wait_closed()
@@ -40,6 +61,7 @@ async def handle_client(
 async def main():
     args = parse_arguments()
     port: int = args.server_port
+
     server = await asyncio.start_server(handle_client, "127.0.0.1", port)
     addr = server.sockets[0].getsockname()
     print(f"Server listening on {addr}")
