@@ -8,7 +8,7 @@ from actions import (
     reload_config_file,
     show_status,
 )
-from task import Task
+from server.task import Task
 
 logger = logging.getLogger("taskmaster: " + __name__)
 logging.basicConfig()

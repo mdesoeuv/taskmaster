@@ -1,5 +1,5 @@
 import logging
-from task import Task
+from server.task import Task
 import pathlib
 from server.config_parser import (
     config_file_parser,

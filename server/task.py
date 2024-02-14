@@ -64,6 +64,7 @@ class Process:
     retries: int = 0
     pid: int = None
     stopflag: bool = False
+    asynciotask: asyncio.Task = None
 
     async def start(self):
         if self.stopflag:

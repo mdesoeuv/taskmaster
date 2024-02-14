@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import pathlib
-from config_parser import config_file_parser, parse_arguments, define_tasks
+from config_parser import config_file_parser, parse_arguments
 import argparse
 
 logger = logging.getLogger("taskmaster")
@@ -9,10 +9,14 @@ logging.basicConfig()
 logger.setLevel(logging.DEBUG)
 
 
-async def manage_tasks(args: argparse.Namespace):
+async def launch_taskmaster(args: argparse.Namespace):
     config = config_file_parser(pathlib.Path(args.configuration_file_path))
     print(config)
-    tasks = define_tasks(config)
+    # tasks = define_tasks(config)
+    # create a task group per task and a task per process in the task group
+    while True:
+        await asyncio.sleep(1)
+        print("Taskmaster running")
 
 
 async def handle_client(
@@ -40,10 +44,10 @@ async def main():
     addr = server.sockets[0].getsockname()
     print(f"Server listening on {addr}")
 
-    task = asyncio.create_task(manage_tasks(args))
+    taskmaster = asyncio.create_task(launch_taskmaster(args))
 
     async with server:
-        await asyncio.gather(server.serve_forever(), task)
+        await asyncio.gather(server.serve_forever(), taskmaster)
 
 
 try:
