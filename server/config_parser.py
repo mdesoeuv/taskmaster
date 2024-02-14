@@ -4,8 +4,9 @@ import yaml
 import pathlib
 from exceptions import ConfigError
 from typing import List
-from task import Task, Signal, AutoRestart
+from helper import Signal, AutoRestart
 from exceptions import TaskDefinitionError
+from process_group import ProcessGroup
 
 try:
     from yaml import CLoader as Loader
@@ -17,7 +18,7 @@ logging.basicConfig()
 logger.setLevel(logging.DEBUG)
 
 
-def config_file_parser(path: pathlib.Path) -> List[Task]:
+def config_file_parser(path: pathlib.Path) -> List[ProcessGroup]:
     if not path.exists() or path.is_dir():
         raise ConfigError(
             "The configuration `"
@@ -37,13 +38,13 @@ def format_env(env: dict) -> dict:
     return formatted
 
 
-def define_tasks(config: dict):
+async def define_process_groups(config: dict):
     programs = config["programs"].keys()
-    tasks = []
+    process_groups = []
     for program in programs:
         prog = config["programs"][program]
         try:
-            task = Task(
+            process_group = ProcessGroup(
                 name=program,
                 cmd=prog.get("cmd"),
                 numprocs=prog.get("numprocs"),
@@ -58,23 +59,26 @@ def define_tasks(config: dict):
                 stoptime=prog.get("stoptime"),
                 stdout=prog.get("stdout"),
                 stderr=prog.get("stderr"),
-                env=format_env(prog.get("env", {}))
+                env=format_env(prog.get("env", {})),
             )
+            print("task created")
+            if process_group.autostart:
+                await process_group.start()
         except Exception as e:
             logger.error("Error while parsing task definition.")
             raise TaskDefinitionError(
                 "Error while parsing task definition. "
                 "Check the configuration file: " + str(e)
             )
-        tasks.append(task)
-        if len(tasks) == 0:
+        process_groups.append(process_group)
+        if len(process_groups) == 0:
             raise TaskDefinitionError(
                 "No task defined in the configuration file."
             )
-    return tasks
+    return process_group
 
 
-def parse_arguments():
+def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Process taskmaster options.")
     parser.add_argument(
         "-c",
@@ -82,6 +86,13 @@ def parse_arguments():
         type=str,
         required=True,
         help="Specify the path of the configuration file.",
+    )
+    parser.add_argument(
+        "-p",
+        dest="server_port",
+        type=str,
+        required=True,
+        help="Specify the port to use for the server.",
     )
     args = parser.parse_args()
     return args

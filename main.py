@@ -1,7 +1,11 @@
 import logging
 import pathlib
-from exceptions import TaskException
-from config_parser import config_file_parser, parse_arguments, define_tasks
+from server.exceptions import TaskException
+from server.config_parser import (
+    config_file_parser,
+    parse_arguments,
+    define_process_groups,
+)
 from prompt import prompt
 
 logger = logging.getLogger("taskmaster")
@@ -12,7 +16,7 @@ logger.setLevel(logging.DEBUG)
 def main():
     args = parse_arguments()
     config = config_file_parser(pathlib.Path(args.configuration_file_path))
-    tasks = define_tasks(config)
+    tasks = define_process_groups(config)
     prompt(tasks, args.configuration_file_path)
 
 
