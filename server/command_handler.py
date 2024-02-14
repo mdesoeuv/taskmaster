@@ -46,9 +46,7 @@ async def handle_command(
         case "restart":
             await process_group_name.restart()
         case "status":
-            print("yo")
             return show_status(process_groups, return_string)
-            print("end")
         case "reload":
             task_list = reload_config_file(config_file_path, process_groups)
         case "exit":

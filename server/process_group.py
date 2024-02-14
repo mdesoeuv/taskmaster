@@ -6,6 +6,7 @@ from yamldataclassconfig.config import YamlDataClassConfig
 from exceptions import ProcessException
 from process import Process
 from helper import AutoRestart, Status, Signal
+from tools import get_process_name, get_process_uptime
 
 logger = logging.getLogger("taskmaster: " + __name__)
 logging.basicConfig()
@@ -96,8 +97,11 @@ class ProcessGroup(YamlDataClassConfig):
         self.start()
 
     def get_status(self) -> str:
+        print("Getting status")
         for process_id in range(self.numprocs):
             if self.processes.get(process_id):
-                return self.processes[process_id].status
+                pid = self.processes[process_id].process.pid
+                print(pid)
+                return f"{self.name}-{process_id}: RUNNING (pid {pid}), uptime " #{get_process_uptime(pid)}"
             else:
                 return f"{self.name}-{process_id}: STOPPED"
