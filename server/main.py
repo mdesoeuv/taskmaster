@@ -18,17 +18,17 @@ async def manage_tasks(args: argparse.Namespace):
 async def handle_client(
     reader: asyncio.StreamReader, writer: asyncio.StreamWriter
 ):
-    print("Client connecté")
+    print("Client connected")
     while True:
         data = await reader.read(100)
         if not data:
             break
         message = data.decode()
-        print(f"Message reçu: {message}")
+        print(f"Received {message}")
         # Logic to handle the message
         writer.write(data)
         await writer.drain()
-    print("Fermeture de la connexion client")
+    print("Client disconnected")
     writer.close()
     await writer.wait_closed()
 
