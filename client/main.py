@@ -40,7 +40,7 @@ def send_command(address: Tuple[str, int]) -> None:
                 if is_command_valid(command):
                     s.sendall(command.encode())
                     response = s.recv(1024)
-                    print(f"Server response: {response.decode()}")
+                    print(response.decode())
             except EOFError:
                 break  # Allows graceful exit with Ctrl+D
 

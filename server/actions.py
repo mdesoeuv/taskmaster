@@ -114,6 +114,8 @@ def reload_config_file(
     return updated_process_group_list
 
 
-def show_status(process_groups: list[ProcessGroup]):
+def show_status(process_groups: list[ProcessGroup], return_string: str) -> str:
     for process_group in process_groups:
-        print(process_group.get_status())
+        return_string += f"{process_group.get_status()}\n"
+        print(return_string)
+    return return_string

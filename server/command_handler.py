@@ -14,18 +14,19 @@ logger.setLevel(logging.DEBUG)
 
 async def handle_command(
     command: str, process_groups: list[ProcessGroup], config_file_path: str
-):
+) -> str:
     command = command.split()
+    return_string = ""
     if len(command) == 0:
-        return
+        return ""
     if len(command) == 1 and command[0] in ["exit", "reload", "status"]:
         action = command[0]
     elif len(command) == 1:
         logger.info("Not enough arguments. usage: command [task_name]")
-        return
+        return "Not enough arguments. usage: command [task_name]"
     elif len(command) > 2:
         logger.info("Too many arguments. usage: command [task_name]")
-        return
+        return "Too many arguments. usage: command [task_name]"
     else:
         action = command[0]
         process_group_name = command[1]
@@ -34,7 +35,8 @@ async def handle_command(
             logger.info(
                 f"Process group {process_group_name} not in config file"
             )
-            return
+            return f"Process group {process_group_name} not in config file"
+    print(f"Command: {action}")
 
     match action:
         case "start":
@@ -44,7 +46,9 @@ async def handle_command(
         case "restart":
             await process_group_name.restart()
         case "status":
-            show_status(process_groups)
+            print("yo")
+            return show_status(process_groups, return_string)
+            print("end")
         case "reload":
             task_list = reload_config_file(config_file_path, process_groups)
         case "exit":
@@ -56,3 +60,9 @@ async def handle_command(
                 f"Unknown command: `{action}` (Available commands: "
                 "start, stop, restart, reload, status, exit)"
             )
+            return (
+                f"Unknown command: `{action}` (Available commands: "
+                "start, stop, restart, reload, status, exit)"
+            )
+
+    return "Command executed successfully"

@@ -79,13 +79,13 @@ class ProcessGroup(YamlDataClassConfig):
         try:
             # Wait for process to stop
             for process_id in range(self.numprocs):
-                if not self.process or not self.process[process_id]:
+                if not self.processes or not self.processes[process_id]:
                     logger.debug(
                         f"Process {self.name}-{process_id} is already stopped"
                     )
                     continue
                 logger.debug(f"Stopping process {self.name}-{process_id}")
-                self.process[process_id].kill()
+                self.processes[process_id].kill()
 
         except Exception as e:
             logger.error(f"Error stopping process: {e}")
@@ -95,9 +95,9 @@ class ProcessGroup(YamlDataClassConfig):
         self.stop()
         self.start()
 
-    def get_status(self):
+    def get_status(self) -> str:
         for process_id in range(self.numprocs):
-            if self.process.get(process_id):
-                print(self.process[process_id])
+            if self.processes.get(process_id):
+                return self.processes[process_id].status
             else:
-                print(f"{self.name}-{process_id}: STOPPED")
+                return f"{self.name}-{process_id}: STOPPED"
