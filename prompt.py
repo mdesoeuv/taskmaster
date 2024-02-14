@@ -8,13 +8,13 @@ from actions import (
     reload_config_file,
     show_status,
 )
-from server.task import Task
+from server.process import ProcessGroup
 
 logger = logging.getLogger("taskmaster: " + __name__)
 logging.basicConfig()
 logger.setLevel(logging.DEBUG)
 
-task_list: List[Task] = []
+task_list: List[ProcessGroup] = []
 config_file_path: str = ""
 
 
@@ -82,7 +82,9 @@ async def signal_handler(name):
         )  # Assuming synchronous. If not, await it.
 
 
-async def prompt(start_task_list: list[Task], start_config_file_path: str):
+async def prompt(
+    start_task_list: list[ProcessGroup], start_config_file_path: str
+):
     global task_list
     global config_file_path
     task_list = start_task_list

@@ -25,7 +25,7 @@ programs:
     numprocs: 3
     umask: 022
     workingdir: /Users/victorchevillotte/Documents/42/taskmaster
-    autostart: true
+    autostart: false
     autorestart: unexpected
     exitcodes:
     - 0

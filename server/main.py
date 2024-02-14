@@ -1,7 +1,11 @@
 import asyncio
 import logging
 import pathlib
-from config_parser import config_file_parser, parse_arguments
+from config_parser import (
+    config_file_parser,
+    parse_arguments,
+    define_process_groups,
+)
 import argparse
 
 logger = logging.getLogger("taskmaster")
@@ -11,12 +15,8 @@ logger.setLevel(logging.DEBUG)
 
 async def launch_taskmaster(args: argparse.Namespace):
     config = config_file_parser(pathlib.Path(args.configuration_file_path))
-    print(config)
-    # tasks = define_tasks(config)
+    await define_process_groups(config)
     # create a task group per task and a task per process in the task group
-    while True:
-        await asyncio.sleep(1)
-        print("Taskmaster running")
 
 
 async def handle_client(

@@ -1,11 +1,11 @@
 import logging
-from server.task import Task
+from server.process import ProcessGroup
 import pathlib
 from server.config_parser import (
     config_file_parser,
     TaskDefinitionError,
     ConfigError,
-    define_tasks,
+    define_process_groups,
 )
 
 logger = logging.getLogger("taskmaster: " + __name__)
@@ -13,21 +13,21 @@ logging.basicConfig()
 logger.setLevel(logging.DEBUG)
 
 
-def find_task_in_list(task_name: str, task_list: list[Task]):
+def find_task_in_list(task_name: str, task_list: list[ProcessGroup]):
     for task in task_list:
         if task.name == task_name:
             return task
     return None
 
 
-def exit_action(task_list: list[Task]):
+def exit_action(task_list: list[ProcessGroup]):
     logger.info("Exiting all tasks...")
     for task in task_list:
         task.stop()
     exit(0)
 
 
-def is_task_in_list(task_list: list[Task], task_name: str) -> bool:
+def is_task_in_list(task_list: list[ProcessGroup], task_name: str) -> bool:
     res: bool = False
     for task in task_list:
         if task.name == task_name:
@@ -36,7 +36,9 @@ def is_task_in_list(task_list: list[Task], task_name: str) -> bool:
     return res
 
 
-def are_tasks_different(old_task: Task, new_task: Task) -> bool:
+def are_tasks_different(
+    old_task: ProcessGroup, new_task: ProcessGroup
+) -> bool:
     # Compare only the specified attributes
     attrs_to_compare = [
         "name",
@@ -66,16 +68,16 @@ def are_tasks_different(old_task: Task, new_task: Task) -> bool:
 
 
 def reload_config_file(
-    file_path: str, old_task_list: list[Task]
-) -> list[Task]:
+    file_path: str, old_task_list: list[ProcessGroup]
+) -> list[ProcessGroup]:
     logger.info("Reloading config file...")
     updated_task_list = []
     try:
         new_config = config_file_parser(pathlib.Path(file_path))
-        new_tasks_list = define_tasks(new_config)
+        new_tasks_list = define_process_groups(new_config)
 
         for old_task in old_task_list:
-            new_task: Task | None = find_task_in_list(
+            new_task: ProcessGroup | None = find_task_in_list(
                 old_task.name, new_tasks_list
             )
             if new_task:
@@ -97,7 +99,7 @@ def reload_config_file(
                 old_task.stop()
         # new tasks which where not in old task list
         for new_task in new_tasks_list:
-            updated_task: Task | None = find_task_in_list(
+            updated_task: ProcessGroup | None = find_task_in_list(
                 new_task.name, updated_task_list
             )
             if not updated_task:
@@ -111,6 +113,6 @@ def reload_config_file(
     return updated_task_list
 
 
-def show_status(task_list: list[Task]):
+def show_status(task_list: list[ProcessGroup]):
     for task in task_list:
         print(task.get_status())
