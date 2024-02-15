@@ -8,7 +8,7 @@ from actions import (
     reload_config_file,
     show_status,
 )
-from server.process import ProcessGroup
+from process import ProcessGroup
 
 logger = logging.getLogger("taskmaster: " + __name__)
 logging.basicConfig()

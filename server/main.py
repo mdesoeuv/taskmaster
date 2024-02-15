@@ -4,9 +4,9 @@ import pathlib
 from config_parser import (
     config_file_parser,
     parse_arguments,
-    define_process_groups,
+    define_programs,
 )
-from process_group import ProcessGroup
+from program import Program
 from functools import partial
 from command_handler import handle_command
 
@@ -14,22 +14,20 @@ logger = logging.getLogger("taskmaster")
 logging.basicConfig()
 logger.setLevel(logging.DEBUG)
 
-process_groups: list[ProcessGroup] = []
+programs: list[Program] = []
 config_file_path: str = ""
 
 
-async def launch_taskmaster(
-    config_file_path: str, process_groups: list[ProcessGroup]
-):
+async def launch_taskmaster(config_file_path: str, programs: list[Program]):
     config = config_file_parser(pathlib.Path(config_file_path))
-    await define_process_groups(config, process_groups)
+    await define_programs(config, programs)
     # create a task group per task and a task per process in the task group
 
 
 async def handle_client(
     reader: asyncio.StreamReader,
     writer: asyncio.StreamWriter,
-    process_groups: list[ProcessGroup],
+    programs: list[Program],
     config_file_path: str,
 ):
     print("Client connected")
@@ -39,9 +37,7 @@ async def handle_client(
             break
         message = data.decode()
         print(f"Received: {message}")
-        response = await handle_command(
-            message, process_groups, config_file_path
-        )
+        response = await handle_command(message, programs, config_file_path)
         if response:
             writer.write(response.encode())
             await writer.drain()
@@ -51,7 +47,7 @@ async def handle_client(
 
 
 async def main():
-    global process_groups
+    global programs
     global config_file_path
 
     args = parse_arguments()
@@ -61,7 +57,7 @@ async def main():
     server = await asyncio.start_server(
         partial(
             handle_client,
-            process_groups=process_groups,
+            programs=programs,
             config_file_path=config_file_path,
         ),
         "127.0.0.1",
@@ -71,7 +67,7 @@ async def main():
     print(f"Server listening on {addr}")
 
     taskmaster = asyncio.create_task(
-        launch_taskmaster(config_file_path, process_groups)
+        launch_taskmaster(config_file_path, programs)
     )
 
     async with server:

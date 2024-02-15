@@ -1,4 +1,4 @@
-from process_group import ProcessGroup
+from program import Program
 from actions import (
     find_process_in_list,
     show_status,
@@ -13,7 +13,7 @@ logger.setLevel(logging.DEBUG)
 
 
 async def handle_command(
-    command: str, process_groups: list[ProcessGroup], config_file_path: str
+    command: str, programs: list[Program], config_file_path: str
 ) -> str:
     command = command.split()
     return_string = ""
@@ -29,13 +29,11 @@ async def handle_command(
         return "Too many arguments. usage: command [task_name]"
     else:
         action = command[0]
-        process_group_name = command[1]
-        task = find_process_in_list(process_group_name, process_groups)
+        program_name = command[1]
+        task = find_process_in_list(program_name, programs)
         if task is None:
-            logger.info(
-                f"Process group {process_group_name} not in config file"
-            )
-            return f"Process group {process_group_name} not in config file"
+            logger.info(f"Process group {program_name} not in config file")
+            return f"Process group {program_name} not in config file"
     print(f"Command: {action}")
 
     match action:
@@ -49,9 +47,9 @@ async def handle_command(
             await task.restart()
             return "Task restarted"
         case "status":
-            return show_status(process_groups, return_string)
+            return show_status(programs, return_string)
         case "reload":
-            task_list = reload_config_file(config_file_path, process_groups)
+            task_list = reload_config_file(config_file_path, programs)
             return "Config file reloaded"
         case "exit":
             exit_action(

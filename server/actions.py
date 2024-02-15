@@ -1,11 +1,11 @@
 import logging
-from process_group import ProcessGroup
+from program import Program
 import pathlib
 from config_parser import (
     config_file_parser,
     TaskDefinitionError,
     ConfigError,
-    define_process_groups,
+    define_programs,
 )
 
 logger = logging.getLogger("taskmaster: " + __name__)
@@ -13,25 +13,21 @@ logging.basicConfig()
 logger.setLevel(logging.DEBUG)
 
 
-def find_process_in_list(
-    process_group_name: str, process_group_list: list[ProcessGroup]
-):
-    for process in process_group_list:
-        if process.name == process_group_name:
+def find_process_in_list(program_name: str, program_list: list[Program]):
+    for process in program_list:
+        if process.name == program_name:
             return process
     return None
 
 
-def exit_action(process_groups: list[ProcessGroup]):
+def exit_action(programs: list[Program]):
     logger.info("Exiting all processes...")
-    for process_group in process_groups:
-        process_group.stop()
+    for program in programs:
+        program.stop()
     exit(0)
 
 
-def are_process_groups_different(
-    old_process_group: ProcessGroup, new_process_group: ProcessGroup
-) -> bool:
+def are_programs_different(old_program: Program, new_program: Program) -> bool:
     # Compare only the specified attributes
     attrs_to_compare = [
         "name",
@@ -52,8 +48,8 @@ def are_process_groups_different(
     ]
 
     for attr in attrs_to_compare:
-        old_attr = getattr(old_process_group, attr)
-        new_attr = getattr(new_process_group, attr)
+        old_attr = getattr(old_program, attr)
+        new_attr = getattr(new_program, attr)
         if old_attr != new_attr:
             return True
 
@@ -61,61 +57,53 @@ def are_process_groups_different(
 
 
 def reload_config_file(
-    file_path: str, old_process_groups: list[ProcessGroup]
-) -> list[ProcessGroup]:
+    file_path: str, old_programs: list[Program]
+) -> list[Program]:
     logger.info("Reloading config file...")
-    updated_process_group_list = []
+    updated_program_list = []
     try:
         new_config = config_file_parser(pathlib.Path(file_path))
-        new_process_group_list = define_process_groups(new_config)
+        new_program_list = define_programs(new_config)
 
-        for old_process_group in old_process_groups:
-            new_process_group: ProcessGroup | None = find_process_in_list(
-                old_process_group.name, new_process_group_list
+        for old_program in old_programs:
+            new_program: Program | None = find_process_in_list(
+                old_program.name, new_program_list
             )
-            if new_process_group:
+            if new_program:
                 # old process group with new config
-                if are_process_groups_different(
-                    old_process_group, new_process_group
-                ):
+                if are_programs_different(old_program, new_program):
                     logger.info(
-                        f"Process group {new_process_group.name} has changed. Reloading process group..."
+                        f"Process group {new_program.name} has changed. Reloading process group..."
                     )
-                    old_process_group.stop()
-                    updated_process_group_list.append(new_process_group)
-                    new_process_group.start()
-                    logger.info(
-                        f"Process group {new_process_group.name} reloaded"
-                    )
+                    old_program.stop()
+                    updated_program_list.append(new_program)
+                    new_program.start()
+                    logger.info(f"Process group {new_program.name} reloaded")
                 # old process group without changes
                 else:
-                    logger.info(
-                        f"Process group {new_process_group.name} unchanged"
-                    )
-                    updated_process_group_list.append(old_process_group)
+                    logger.info(f"Process group {new_program.name} unchanged")
+                    updated_program_list.append(old_program)
             # old process group that is no longer in config
             else:
-                old_process_group.stop()
+                old_program.stop()
         # new process groups which where not in old process group list
-        for new_process_group in new_process_group_list:
-            updated_process_group: ProcessGroup | None = find_process_in_list(
-                new_process_group.name, updated_process_group_list
+        for new_program in new_program_list:
+            updated_program: Program | None = find_process_in_list(
+                new_program.name, updated_program_list
             )
-            if not updated_process_group:
-                logger.info(
-                    f"New Process group {new_process_group.name} to add"
-                )
-                updated_process_group_list.append(new_process_group)
-                new_process_group.start()
+            if not updated_program:
+                logger.info(f"New Process group {new_program.name} to add")
+                updated_program_list.append(new_program)
+                new_program.start()
 
         logger.info("Config file reloaded successfully")
     except (TaskDefinitionError, ConfigError) as e:
         print(f"Error reloading config file: {e}")
-    return updated_process_group_list
+    return updated_program_list
 
 
-def show_status(process_groups: list[ProcessGroup], return_string: str) -> str:
-    for process_group in process_groups:
-        return_string += f"{process_group.get_status()}\n"
+def show_status(programs: list[Program], return_string: str) -> str:
+    for program in programs:
+        return_string += f"{program.get_status()}\n"
         print(return_string)
     return return_string

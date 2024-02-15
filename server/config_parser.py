@@ -6,7 +6,7 @@ from exceptions import ConfigError
 from typing import List
 from enums import Signal, AutoRestart
 from exceptions import TaskDefinitionError
-from process_group import ProcessGroup
+from program import Program
 
 try:
     from yaml import CLoader as Loader
@@ -18,7 +18,7 @@ logging.basicConfig()
 logger.setLevel(logging.DEBUG)
 
 
-def config_file_parser(path: pathlib.Path) -> List[ProcessGroup]:
+def config_file_parser(path: pathlib.Path) -> List[Program]:
     if not path.exists() or path.is_dir():
         raise ConfigError(
             "The configuration `"
@@ -38,14 +38,12 @@ def format_env(env: dict) -> dict:
     return formatted
 
 
-async def define_process_groups(
-    config: dict, process_groups: List[ProcessGroup]
-):
-    programs = config["programs"].keys()
-    for program in programs:
+async def define_programs(config: dict, programs: List[Program]):
+    program_list = config["programs"].keys()
+    for program in program_list:
         prog = config["programs"][program]
         try:
-            process_group = ProcessGroup(
+            program = Program(
                 name=program,
                 cmd=prog.get("cmd"),
                 numprocs=prog.get("numprocs"),
@@ -62,20 +60,20 @@ async def define_process_groups(
                 stderr=prog.get("stderr"),
                 env=format_env(prog.get("env", {})),
             )
-            if process_group.autostart:
-                await process_group.start()
+            if program.autostart:
+                await program.start()
         except Exception as e:
             logger.error("Error while parsing task definition.")
             raise TaskDefinitionError(
                 "Error while parsing task definition. "
                 "Check the configuration file: " + str(e)
             )
-        process_groups.append(process_group)
-        if len(process_groups) == 0:
+        programs.append(program)
+        if len(programs) == 0:
             raise TaskDefinitionError(
                 "No task defined in the configuration file."
             )
-    return process_groups
+    return programs
 
 
 def parse_arguments() -> argparse.Namespace:

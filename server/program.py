@@ -14,7 +14,7 @@ logger.setLevel(logging.DEBUG)
 
 
 @dataclass
-class ProcessGroup(YamlDataClassConfig):
+class Program(YamlDataClassConfig):
     name: str
     cmd: str
     numprocs: int = 1
