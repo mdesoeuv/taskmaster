@@ -89,7 +89,6 @@ class Process:
             or self.retries >= self.startretries
         ):
             logger.error(f"Max retries reached for process {self.name}")
-            self.status = Status.FATAL
             return
         self.retries += 1
         logger.info(
@@ -99,14 +98,16 @@ class Process:
 
     async def kill(self):
         self.stopflag = True
+        logger.debug(f"Stopping process {self.name} with signal {self.stopsignal.signal}")
         if self.process and self.process.returncode is None:
             self.process.send_signal(self.stopsignal.signal)
+            self.status = Status.STOPPING
             try:
-                await asyncio.wait_for(self.process.wait(), self.stoptime)
+                await asyncio.wait_for(self.process.wait(), timeout=self.stoptime)
                 logger.info(f"Process {self.name} stopped")
                 self.status = Status.STOPPED
             except asyncio.TimeoutError:
-                self.process.kill()  # Changed to .kill() for asyncio subprocess
+                self.process.kill()
                 self.status = Status.FATAL
                 logger.info(f"Process {self.name} killed")
         else:
