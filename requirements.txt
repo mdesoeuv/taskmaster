@@ -1,2 +1,5 @@
 PyYAML>=6.0.1
 yamldataclassconfig==1.5.0
+
+#### BONUS MODULES ####
+python-dotenv==1.0.1

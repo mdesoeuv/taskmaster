@@ -53,6 +53,19 @@
 (.venv) ➜  taskmaster git:(feat/sighup) ✗ 
 
 
-### Local SMTP Server
+### Mail Alerting
 
-`python -m smtpd -c DebuggingServer -n localhost:1025`
+#### Mail configuration with gmail address using SSL
+
+- SMTP Sever : smtp.gmail.com
+- Port : 465
+- Username : Sender mail address
+- Password : Gmail requires an App Password to be created (16 characters) in order to send mails from an application
+- Dests : Comma-separated list of mail addresses
+- 
+
+#### App Password Creation
+
+1) App password creation is under the 2-Step Verification menu (https://myaccount.google.com/signinoptions/two-step-verification)
+2) At the bottom of the page there is an `App Passwords` submenu (https://myaccount.google.com/apppasswords)
+3) Create an App Password and copy the password
