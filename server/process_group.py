@@ -5,7 +5,7 @@ from typing import List, Dict
 from yamldataclassconfig.config import YamlDataClassConfig
 from exceptions import ProcessException
 from process import Process
-from helper import AutoRestart, Status, Signal
+from enums import AutoRestart, Status, Signal
 from tools import get_process_name, get_process_uptime
 
 logger = logging.getLogger("taskmaster: " + __name__)

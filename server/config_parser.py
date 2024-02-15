@@ -4,7 +4,7 @@ import yaml
 import pathlib
 from exceptions import ConfigError
 from typing import List
-from helper import Signal, AutoRestart
+from enums import Signal, AutoRestart
 from exceptions import TaskDefinitionError
 from process_group import ProcessGroup
 

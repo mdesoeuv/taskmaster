@@ -3,7 +3,7 @@ import socket
 import readline
 from typing import Tuple
 import logging
-from parse_server_port import parse_server_port
+from arg_parser import parse_server_port
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

@@ -10,12 +10,31 @@ programs:
     exitcodes:
     - 0
     - 2
-    startretries: 3
-    starttime: 1
+    startretries: 0
+    starttime: 0
     stopsignal: TERM
     stoptime: 1
     stdout: /home/mdesoeuv/Projects/taskmaster/logs/ls.stdout
     stderr: /home/mdesoeuv/Projects/taskmaster/logs/ls.stderr
+    env:
+      STARTED_BY: taskmaster
+      ANSWER: 42
+
+  sleep:
+    cmd: "/bin/sleep 1000"
+    numprocs: 1
+    umask: 022
+    workingdir: /home/mdesoeuv/Projects/taskmaster
+    autostart: false
+    autorestart: unexpected
+    exitcodes:
+    - 0
+    startretries: 3
+    starttime: 10
+    stopsignal: USR1
+    stoptime: 3
+    stdout: /home/mdesoeuv/Projects/taskmaster/logs/sleep.stdout
+    stderr: /home/mdesoeuv/Projects/taskmaster/logs/sleep.stderr
     env:
       STARTED_BY: taskmaster
       ANSWER: 42
@@ -25,13 +44,13 @@ programs:
     numprocs: 3
     umask: 022
     workingdir: /home/mdesoeuv/Projects/taskmaster
-    autostart: true
+    autostart: false
     autorestart: unexpected
     exitcodes:
     - 0
     - 2
     startretries: 3
-    starttime: 1
+    starttime: 0
     stopsignal: TERM
     stoptime: 1
     stdout: /home/mdesoeuv/Projects/taskmaster/logs/env.stdout
@@ -60,17 +79,17 @@ programs:
       STARTED_BY: taskmaster
       ANSWER: 42
 
-  vogsphere:
-    cmd: "/usr/local/bin/vogsphere-worker --no-prefork"
-    numprocs: 8
-    umask: 077
-    workingdir: /tmp
-    autostart: false
-    autorestart: unexpected
-    exitcodes: 0
-    startretries: 3
-    starttime: 5
-    stopsignal: USR1
-    stoptime: 10
-    stdout: /tmp/vgsworker.stdout
-    stderr: /tmp/vgsworker.stderr
+  # vogsphere:
+  #   cmd: "/usr/local/bin/vogsphere-worker --no-prefork"
+  #   numprocs: 8
+  #   umask: 077
+  #   workingdir: /tmp
+  #   autostart: false
+  #   autorestart: unexpected
+  #   exitcodes: 0
+  #   startretries: 3
+  #   starttime: 5
+  #   stopsignal: USR1
+  #   stoptime: 10
+  #   stdout: /tmp/vgsworker.stdout
+  #   stderr: /tmp/vgsworker.stderr
