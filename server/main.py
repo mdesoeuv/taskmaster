@@ -23,7 +23,7 @@ async def launch_taskmaster(taskmaster: TaskMaster):
     taskmaster.programs_definition = define_programs(
         config, taskmaster.programs
     )
-    await launch_programs(taskmaster.programs_definition, taskmaster.programs)
+    launch_programs(taskmaster.programs_definition, taskmaster.programs)
 
 
 async def handle_client(

@@ -24,9 +24,9 @@ def find_process_in_list(program_name: str, program_list: list[Program]):
     return None
 
 
-def exit_action(programs: list[Program]):
+def exit_action(programs: Dict[str, Program]):
     logger.info("Exiting all processes...")
-    for program in programs:
+    for program in programs.values():
         program.stop()
     exit(0)
 
@@ -71,51 +71,67 @@ def compare_programs(
     return differences
 
 
-def reload_config_file(taskmaster: TaskMaster) -> Dict[str, Program]:
+@dataclass
+class ProgramUpdate:
+    program: Program
+    definition: ProgramDefinition
+
+
+def reload_config_file(taskmaster: TaskMaster) -> str:
     logger.info("Reloading config file...")
-    updated_program_list = []
+    programs_to_update: Dict[str, ProgramUpdate] = {}
+    programs_to_add: Dict[str, ProgramDefinition] = {}
+    updated_programs: Dict[str, Program] = {}
+
     try:
         new_config = config_file_parser(taskmaster.config_file)
         new_programs_definition = define_programs(new_config)
-        differences = compare_programs(
-            taskmaster.programs_definition, new_programs_definition
+
+        for old_program_name, old_program in taskmaster.programs.items():
+            # old process group that is no longer in config
+            if old_program not in new_programs_definition:
+                old_program.stop()
+            else:
+                # compare old and new program
+                differences = compare_programs(
+                    taskmaster.programs[old_program],
+                    new_programs_definition[old_program],
+                )
+                if differences:
+                    logger.info(
+                        f"Process group {old_program} has changed. Reloading process group..."
+                    )
+                    programs_to_update[old_program_name] = ProgramUpdate(
+                        program=old_program,
+                        definition=new_programs_definition[old_program],
+                    )
+                else:
+                    logger.info(f"Process group {old_program} unchanged")
+                    updated_programs[old_program_name] = old_program
+
+        # new process groups which where not in old process group list
+        for (
+            new_program_name,
+            new_program_definition,
+        ) in new_programs_definition.items():
+            if new_program_name not in taskmaster.programs:
+                programs_to_add[new_program_name] = new_program_definition
+
+        # add new programs
+        updated_programs: Dict[str, Program] = launch_programs(
+            programs_to_add, updated_programs
         )
 
-        for old_program in old_programs:
-            new_program: Program | None = find_process_in_list(
-                old_program.name, new_program_list
-            )
-            if new_program:
-                # old process group with new config
-                if are_programs_different(old_program, new_program):
-                    logger.info(
-                        f"Process group {new_program.name} has changed. Reloading process group..."
-                    )
-                    old_program.stop()
-                    updated_program_list.append(new_program)
-                    new_program.start()
-                    logger.info(f"Process group {new_program.name} reloaded")
-                # old process group without changes
-                else:
-                    logger.info(f"Process group {new_program.name} unchanged")
-                    updated_program_list.append(old_program)
-            # old process group that is no longer in config
-            else:
-                old_program.stop()
-        # new process groups which where not in old process group list
-        for new_program in new_program_list:
-            updated_program: Program | None = find_process_in_list(
-                new_program.name, updated_program_list
-            )
-            if not updated_program:
-                logger.info(f"New Process group {new_program.name} to add")
-                updated_program_list.append(new_program)
-                new_program.start()
+        # update changed programs
+
+        taskmaster.programs = updated_programs
+        taskmaster.programs_definition = new_programs_definition
 
         logger.info("Config file reloaded successfully")
     except (TaskDefinitionError, ConfigError) as e:
         print(f"Error reloading config file: {e}")
-    return updated_program_list
+        return f"Error reloading config file: {e}"
+    return "Reloaded config file successfully"
 
 
 def show_status(programs: Dict[str, Program], return_string: str) -> str:

@@ -50,11 +50,10 @@ async def handle_command(command: str, taskmaster: TaskMaster) -> str:
         case "status":
             return show_status(taskmaster.programs, return_string)
         case "reload":
-            task_list = reload_config_file(taskmaster)
-            return "Config file reloaded"
+            return reload_config_file(taskmaster)
         case "exit":
             exit_action(
-                task_list
+                taskmaster.programs
             )  # Assuming exit_action is synchronous. If not, add await.
         case _:
             logger.info(
