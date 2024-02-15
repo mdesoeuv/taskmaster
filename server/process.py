@@ -100,12 +100,14 @@ class Process:
     async def kill(self):
         self.stopflag = True
         if self.process and self.process.returncode is None:
-            self.process.terminate()
+            self.process.send_signal(self.stopsignal.signal)
             try:
                 await asyncio.wait_for(self.process.wait(), self.stoptime)
+                logger.info(f"Process {self.name} stopped")
+                self.status = Status.STOPPED
             except asyncio.TimeoutError:
                 self.process.kill()  # Changed to .kill() for asyncio subprocess
-            self.status = Status.STOPPED
-            logger.info(f"Process {self.name} killed")
+                self.status = Status.FATAL
+                logger.info(f"Process {self.name} killed")
         else:
             logger.info(f"Process {self.name} is already stopped")

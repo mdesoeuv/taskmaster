@@ -28,6 +28,10 @@ class Status(str, Enum):
     RUNNING = "RUNNING"
     EXITED = "EXITED"
     FATAL = "FATAL"
+    STOPPING = "STOPPING"
+
+    def __str__(self):
+        return self.value
 
 
 class AutoRestart(str, Enum):

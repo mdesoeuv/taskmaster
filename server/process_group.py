@@ -40,33 +40,35 @@ class ProcessGroup(YamlDataClassConfig):
         logger.info(f"Starting task {self.name}")
         errors = 0
         try:
-            async with asyncio.TaskGroup() as tg:
-                for process_id in range(self.numprocs):
-                    try:
-                        self.processes[process_id] = Process(
-                            name=f"{self.name}-{process_id}",
-                            cmd=self.cmd,
-                            cwd=self.workingdir,
-                            env=self.env,
-                            umask=self.umask,
-                            stdout=self.stdout,
-                            stderr=self.stderr,
-                            exitcodes=self.exitcodes,
-                            stopsignal=self.stopsignal,
-                            starttime=self.starttime,
-                            stoptime=self.stoptime,
-                            stopflag=False,
-                            autorestart=self.autorestart,
-                            startretries=self.startretries,
-                        )
-                        logger.debug(
-                            f"Starting process {self.name}-{process_id}"
-                        )
-                        tg.create_task(self.processes[process_id].start())
-                    except Exception as e:
-                        raise ProcessException(
-                            f"Error starting process {self.name}-{process_id}: {e}"
-                        )
+            for process_id in range(self.numprocs):
+                try:
+                    self.processes[process_id] = Process(
+                        name=f"{self.name}-{process_id}",
+                        cmd=self.cmd,
+                        cwd=self.workingdir,
+                        env=self.env,
+                        umask=self.umask,
+                        stdout=self.stdout,
+                        stderr=self.stderr,
+                        exitcodes=self.exitcodes,
+                        stopsignal=self.stopsignal,
+                        starttime=self.starttime,
+                        stoptime=self.stoptime,
+                        stopflag=False,
+                        autorestart=self.autorestart,
+                        startretries=self.startretries,
+                    )
+                    logger.debug(f"Starting process {self.name}-{process_id}")
+                    asyncio.create_task(self.processes[process_id].start())
+                    logger.debug(f"Process {self.name}-{process_id} started")
+                except Exception as e:
+                    raise ProcessException(
+                        f"Error starting process {self.name}-{process_id}: {e}"
+                    )
+                logger.debug(
+                    f"Task {self.name}: {self.numprocs - errors}/{self.numprocs} started successfully"
+                )
+
         except Exception as e:
             logger.error(f"Error starting processGroup: {e}")
             errors += 1
@@ -74,8 +76,9 @@ class ProcessGroup(YamlDataClassConfig):
         # logger.info(
         #     f"Task {self.name}: {self.numprocs - errors}/{self.numprocs} started successfully"
         # )
+        logger.debug(f"Task {self.name} started successfully")
 
-    def stop(self):
+    async def stop(self):
         logger.info(f"Stopping task {self.name}")
         try:
             # Wait for process to stop
@@ -86,7 +89,7 @@ class ProcessGroup(YamlDataClassConfig):
                     )
                     continue
                 logger.debug(f"Stopping process {self.name}-{process_id}")
-                self.processes[process_id].kill()
+                await self.processes[process_id].kill()
 
         except Exception as e:
             logger.error(f"Error stopping process: {e}")
@@ -101,7 +104,7 @@ class ProcessGroup(YamlDataClassConfig):
         for process_id in range(self.numprocs):
             if self.processes.get(process_id):
                 pid = self.processes[process_id].process.pid
-                print(pid)
-                return f"{self.name}-{process_id}: RUNNING (pid {pid}), uptime " #{get_process_uptime(pid)}"
+                status = self.processes[process_id].status
+                return f"{self.name}-{process_id}: {status} (pid {pid}), uptime "  # {get_process_uptime(pid)}"
             else:
                 return f"{self.name}-{process_id}: STOPPED"

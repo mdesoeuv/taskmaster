@@ -40,15 +40,19 @@ async def handle_command(
 
     match action:
         case "start":
-            await process_group_name.start()
+            await task.start()
+            return "Task started"
         case "stop":
-            await process_group_name.stop()
+            await task.stop()
+            return "Task stopped"
         case "restart":
-            await process_group_name.restart()
+            await task.restart()
+            return "Task restarted"
         case "status":
             return show_status(process_groups, return_string)
         case "reload":
             task_list = reload_config_file(config_file_path, process_groups)
+            return "Config file reloaded"
         case "exit":
             exit_action(
                 task_list
