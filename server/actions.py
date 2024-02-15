@@ -59,7 +59,7 @@ def compare_program_defintions(
         new_attr = getattr(new_program, attr)
 
         if old_attr != new_attr:
-            #todo fix verification of depth
+            # todo fix verification of depth
             print(old_program.stopsignal.signal)
             print(new_program.stopsignal.signal)
             print(f"Attribute {attr} has changed")
@@ -97,6 +97,7 @@ async def reload_config_file(taskmaster: TaskMaster) -> str:
                         f"Process group {old_program_name} has changed. Reloading process group..."
                     )
                     # TODO update only specific fields and do not kill if unnecessary
+                    old_program.autorestart = False
                     await old_program.stop()
                     programs_to_add[old_program_name] = (
                         new_programs_definition[old_program_name]
