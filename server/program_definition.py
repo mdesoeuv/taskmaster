@@ -6,6 +6,7 @@ from enums import AutoRestart, Signal
 
 @dataclass
 class ProgramDefinition(YamlDataClassConfig):
+    name: str
     cmd: str
     numprocs: int = 1
     umask: str = "022"

@@ -1,12 +1,12 @@
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from typing import List, Dict
+from typing import Dict
 from yamldataclassconfig.config import YamlDataClassConfig
 from exceptions import ProcessException
 from process import Process
-from enums import AutoRestart, Status, Signal
-from tools import get_process_name, get_process_uptime
+from enums import Status
+from program_definition import ProgramDefinition
 
 logger = logging.getLogger("taskmaster: " + __name__)
 logging.basicConfig()
@@ -14,16 +14,16 @@ logger.setLevel(logging.DEBUG)
 
 
 @dataclass
-class Program(YamlDataClassConfig):
-    name: str
-    numprocs: int = 1
-    autostart: bool = True
-    processes: Dict[int, Process] = field(init=False, default_factory=dict)
+class Program(ProgramDefinition):
+    processes: Dict[int, "Process"] = field(default_factory=dict)
 
-    def __post_init__(self):
-        self.status = {i: Status.STOPPED for i in range(self.numprocs)}
+    def __init__(self, program_definition: ProgramDefinition):
+        # Init the ProgramDefinition attributes coming from herited class
+        super().__init__(**program_definition.__dict__)
+        # Init the Program attributes
+        self.processes = {}
 
-    async def start(self):
+    def start(self):
         logger.info(f"Starting task {self.name}")
         errors = 0
         try:

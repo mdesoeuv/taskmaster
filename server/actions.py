@@ -1,7 +1,7 @@
 import logging
 from typing import Dict
 from program import Program
-import pathlib
+from dataclasses import dataclass
 from config_parser import (
     config_file_parser,
     TaskDefinitionError,
@@ -10,7 +10,8 @@ from config_parser import (
 )
 from program_definition import ProgramDefinition
 from exceptions import ProcessException
-from server.taskmaster import TaskMaster
+from taskmaster import TaskMaster
+from process import Process
 
 logger = logging.getLogger("taskmaster: " + __name__)
 logging.basicConfig()
@@ -31,7 +32,9 @@ def exit_action(programs: Dict[str, Program]):
     exit(0)
 
 
-def are_programs_different(old_program: Program, new_program: Program) -> bool:
+def compare_program_defintions(
+    old_program: ProgramDefinition, new_program: ProgramDefinition
+) -> bool:
     # Compare only the specified attributes
     attrs_to_compare = [
         "name",
@@ -54,21 +57,15 @@ def are_programs_different(old_program: Program, new_program: Program) -> bool:
     for attr in attrs_to_compare:
         old_attr = getattr(old_program, attr)
         new_attr = getattr(new_program, attr)
+
         if old_attr != new_attr:
+            #todo fix verification of depth
+            print(old_program.stopsignal.signal)
+            print(new_program.stopsignal.signal)
+            print(f"Attribute {attr} has changed")
             return True
 
     return False
-
-
-def compare_programs(
-    model1: BaseModel, model2: BaseModel
-) -> Dict[str, Dict[str, Any]]:
-    differences = {}
-    for field in model1.__fields__:
-        value1, value2 = getattr(model1, field), getattr(model2, field)
-        if value1 != value2:
-            differences[field] = {"model1": value1, "model2": value2}
-    return differences
 
 
 @dataclass
@@ -77,36 +74,35 @@ class ProgramUpdate:
     definition: ProgramDefinition
 
 
-def reload_config_file(taskmaster: TaskMaster) -> str:
+async def reload_config_file(taskmaster: TaskMaster) -> str:
     logger.info("Reloading config file...")
     programs_to_update: Dict[str, ProgramUpdate] = {}
     programs_to_add: Dict[str, ProgramDefinition] = {}
     updated_programs: Dict[str, Program] = {}
-
     try:
         new_config = config_file_parser(taskmaster.config_file)
-        new_programs_definition = define_programs(new_config)
-
+        new_programs_definition = await define_programs(new_config)
         for old_program_name, old_program in taskmaster.programs.items():
             # old process group that is no longer in config
-            if old_program not in new_programs_definition:
-                old_program.stop()
+            if old_program_name not in new_programs_definition.keys():
+                await old_program.stop()
             else:
                 # compare old and new program
-                differences = compare_programs(
-                    taskmaster.programs[old_program],
-                    new_programs_definition[old_program],
+                differences = compare_program_defintions(
+                    taskmaster.programs_definition[old_program_name],
+                    new_programs_definition[old_program_name],
                 )
                 if differences:
                     logger.info(
-                        f"Process group {old_program} has changed. Reloading process group..."
+                        f"Process group {old_program_name} has changed. Reloading process group..."
                     )
-                    programs_to_update[old_program_name] = ProgramUpdate(
-                        program=old_program,
-                        definition=new_programs_definition[old_program],
+                    # TODO update only specific fields and do not kill if unnecessary
+                    await old_program.stop()
+                    programs_to_add[old_program_name] = (
+                        new_programs_definition[old_program_name]
                     )
                 else:
-                    logger.info(f"Process group {old_program} unchanged")
+                    logger.info(f"Process group {old_program_name} unchanged")
                     updated_programs[old_program_name] = old_program
 
         # new process groups which where not in old process group list
@@ -123,7 +119,6 @@ def reload_config_file(taskmaster: TaskMaster) -> str:
         )
 
         # update changed programs
-
         taskmaster.programs = updated_programs
         taskmaster.programs_definition = new_programs_definition
 
@@ -135,35 +130,19 @@ def reload_config_file(taskmaster: TaskMaster) -> str:
 
 
 def show_status(programs: Dict[str, Program], return_string: str) -> str:
+    print("Showing status...")
     for program in programs.values():
         return_string += f"{program.get_status()}\n"
-        print(return_string)
     return return_string
 
 
-def launch_programs(
+async def launch_programs(
     program_definitions: Dict[str, ProgramDefinition],
     programs: Dict[str, Program],
 ) -> Dict[str, Program]:
     for program_name, program_definition in program_definitions.items():
         try:
-            program = Program(
-                name=program_definition.name,
-                cmd=program_definition.cmd,
-                numprocs=program_definition.numprocs,
-                umask=program_definition.umask,
-                workingdir=program_definition.workingdir,
-                autostart=program_definition.autostart,
-                autorestart=program_definition.autorestart,
-                exitcodes=program_definition.exitcodes,
-                startretries=program_definition.startretries,
-                starttime=program_definition.starttime,
-                stoptime=program_definition.stoptime,
-                stopsignal=program_definition.stopsignal,
-                stdout=program_definition.stdout,
-                stderr=program_definition.stderr,
-                env=program_definition.env,
-            )
+            program = Program(program_definition)
             programs[program_name] = program
             if program.autostart:
                 program.start()

@@ -18,7 +18,7 @@ logging.basicConfig()
 logger.setLevel(logging.DEBUG)
 
 
-def config_file_parser(path: pathlib.Path) -> List[Program]:
+def config_file_parser(path: pathlib.Path) -> Dict:
     if not path.exists() or path.is_dir():
         raise ConfigError(
             "The configuration `"
@@ -39,13 +39,16 @@ def format_env(env: dict) -> dict:
 
 
 async def define_programs(
-    config: dict, programs_definition: Dict[str, ProgramDefinition]
+    config: dict,
 ) -> Dict[str, ProgramDefinition]:
+    print("define_programs")
+    programs_definition: Dict[str, ProgramDefinition] = {}
     program_list = config["programs"].keys()
     for program_name in program_list:
         prog = config["programs"][program_name]
         try:
             program = ProgramDefinition(
+                name=program_name,
                 cmd=prog.get("cmd"),
                 numprocs=prog.get("numprocs"),
                 umask=prog.get("umask"),

@@ -1,14 +1,11 @@
-import pathlib
-from program import Program
 from actions import (
-    find_process_in_list,
     show_status,
     reload_config_file,
     exit_action,
 )
 import logging
 
-from server.taskmaster import TaskMaster
+from taskmaster import TaskMaster
 
 logger = logging.getLogger("taskmaster: " + __name__)
 logging.basicConfig()
@@ -16,6 +13,7 @@ logger.setLevel(logging.DEBUG)
 
 
 async def handle_command(command: str, taskmaster: TaskMaster) -> str:
+    print(f"Command: {command}")
     command = command.split()
     return_string = ""
     if len(command) == 0:
@@ -35,7 +33,6 @@ async def handle_command(command: str, taskmaster: TaskMaster) -> str:
         if task is None:
             logger.info(f"Process group {program_name} not in config file")
             return f"Process group {program_name} not in config file"
-    print(f"Command: {action}")
 
     match action:
         case "start":
@@ -50,7 +47,7 @@ async def handle_command(command: str, taskmaster: TaskMaster) -> str:
         case "status":
             return show_status(taskmaster.programs, return_string)
         case "reload":
-            return reload_config_file(taskmaster)
+            return await reload_config_file(taskmaster)
         case "exit":
             exit_action(
                 taskmaster.programs

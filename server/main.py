@@ -20,10 +20,8 @@ taskmaster: TaskMaster
 
 async def launch_taskmaster(taskmaster: TaskMaster):
     config = config_file_parser(taskmaster.config_file)
-    taskmaster.programs_definition = define_programs(
-        config, taskmaster.programs
-    )
-    launch_programs(taskmaster.programs_definition, taskmaster.programs)
+    taskmaster.programs_definition = await define_programs(config)
+    await launch_programs(taskmaster.programs_definition, taskmaster.programs)
 
 
 async def handle_client(
@@ -31,6 +29,7 @@ async def handle_client(
     writer: asyncio.StreamWriter,
     taskmaster: TaskMaster,
 ):
+
     print("Client connected")
     while True:
         data = await reader.read(100)
@@ -38,9 +37,7 @@ async def handle_client(
             break
         message = data.decode()
         print(f"Received: {message}")
-        response = await handle_command(
-            message, taskmaster
-        )
+        response = await handle_command(message, taskmaster)
         if response:
             writer.write(response.encode())
             await writer.drain()
@@ -56,9 +53,8 @@ async def main():
     port: int = args.server_port
     config_file = pathlib.Path(args.configuration_file_path)
     taskmaster = TaskMaster(config_file=config_file)
-
     server = await asyncio.start_server(
-        partial(handle_client, taskmaster),
+        partial(handle_client, taskmaster=taskmaster),
         "127.0.0.1",
         port,
     )
@@ -66,7 +62,6 @@ async def main():
     print(f"Server listening on {addr}")
 
     taskmaster = asyncio.create_task(launch_taskmaster(taskmaster))
-
     async with server:
         await asyncio.gather(server.serve_forever(), taskmaster)
 
