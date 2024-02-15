@@ -1,4 +1,5 @@
 import logging
+from typing import Dict
 from program import Program
 import pathlib
 from config_parser import (
@@ -7,6 +8,9 @@ from config_parser import (
     ConfigError,
     define_programs,
 )
+from program_definition import ProgramDefinition
+from exceptions import ProcessException
+from server.taskmaster import TaskMaster
 
 logger = logging.getLogger("taskmaster: " + __name__)
 logging.basicConfig()
@@ -55,22 +59,27 @@ def are_programs_different(old_program: Program, new_program: Program) -> bool:
 
     return False
 
-def compare_programs(model1: BaseModel, model2: BaseModel) -> Dict[str, Dict[str, Any]]:
+
+def compare_programs(
+    model1: BaseModel, model2: BaseModel
+) -> Dict[str, Dict[str, Any]]:
     differences = {}
     for field in model1.__fields__:
         value1, value2 = getattr(model1, field), getattr(model2, field)
         if value1 != value2:
-            differences[field] = {'model1': value1, 'model2': value2}
+            differences[field] = {"model1": value1, "model2": value2}
     return differences
 
-def reload_config_file(
-    file_path: str, old_programs: list[Program]
-) -> list[Program]:
+
+def reload_config_file(taskmaster: TaskMaster) -> Dict[str, Program]:
     logger.info("Reloading config file...")
     updated_program_list = []
     try:
-        new_config = config_file_parser(pathlib.Path(file_path))
-        new_program_list = define_programs(new_config)
+        new_config = config_file_parser(taskmaster.config_file)
+        new_programs_definition = define_programs(new_config)
+        differences = compare_programs(
+            taskmaster.programs_definition, new_programs_definition
+        )
 
         for old_program in old_programs:
             new_program: Program | None = find_process_in_list(
@@ -109,8 +118,41 @@ def reload_config_file(
     return updated_program_list
 
 
-def show_status(programs: list[Program], return_string: str) -> str:
-    for program in programs:
+def show_status(programs: Dict[str, Program], return_string: str) -> str:
+    for program in programs.values():
         return_string += f"{program.get_status()}\n"
         print(return_string)
     return return_string
+
+
+def launch_programs(
+    program_definitions: Dict[str, ProgramDefinition],
+    programs: Dict[str, Program],
+) -> Dict[str, Program]:
+    for program_name, program_definition in program_definitions.items():
+        try:
+            program = Program(
+                name=program_definition.name,
+                cmd=program_definition.cmd,
+                numprocs=program_definition.numprocs,
+                umask=program_definition.umask,
+                workingdir=program_definition.workingdir,
+                autostart=program_definition.autostart,
+                autorestart=program_definition.autorestart,
+                exitcodes=program_definition.exitcodes,
+                startretries=program_definition.startretries,
+                starttime=program_definition.starttime,
+                stoptime=program_definition.stoptime,
+                stopsignal=program_definition.stopsignal,
+                stdout=program_definition.stdout,
+                stderr=program_definition.stderr,
+                env=program_definition.env,
+            )
+            programs[program_name] = program
+            if program.autostart:
+                program.start()
+        except Exception as e:
+            raise ProcessException(
+                f"Error creating process {program_name}: {e}"
+            )
+    return programs

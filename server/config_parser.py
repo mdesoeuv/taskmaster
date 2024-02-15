@@ -3,7 +3,7 @@ import argparse
 import yaml
 import pathlib
 from exceptions import ConfigError
-from typing import List
+from typing import Dict, List
 from enums import Signal, AutoRestart
 from exceptions import TaskDefinitionError
 from program_definition import ProgramDefinition
@@ -38,13 +38,14 @@ def format_env(env: dict) -> dict:
     return formatted
 
 
-async def define_programs(config: dict, programs_definition: List[ProgramDefinition]):
+async def define_programs(
+    config: dict, programs_definition: Dict[str, ProgramDefinition]
+) -> Dict[str, ProgramDefinition]:
     program_list = config["programs"].keys()
-    for program in program_list:
-        prog = config["programs"][program]
+    for program_name in program_list:
+        prog = config["programs"][program_name]
         try:
             program = ProgramDefinition(
-                name=program,
                 cmd=prog.get("cmd"),
                 numprocs=prog.get("numprocs"),
                 umask=prog.get("umask"),
@@ -60,15 +61,13 @@ async def define_programs(config: dict, programs_definition: List[ProgramDefinit
                 stderr=prog.get("stderr"),
                 env=format_env(prog.get("env", {})),
             )
-            if program.autostart:
-                await program.start()
         except Exception as e:
             logger.error("Error while parsing task definition.")
             raise TaskDefinitionError(
                 "Error while parsing task definition. "
                 "Check the configuration file: " + str(e)
             )
-        programs_definition.append(program)
+        programs_definition[program_name] = program
         if len(programs_definition) == 0:
             raise TaskDefinitionError(
                 "No program defined in the configuration file."

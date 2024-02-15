@@ -1,3 +1,4 @@
+import pathlib
 from program import Program
 from actions import (
     find_process_in_list,
@@ -7,14 +8,14 @@ from actions import (
 )
 import logging
 
+from server.taskmaster import TaskMaster
+
 logger = logging.getLogger("taskmaster: " + __name__)
 logging.basicConfig()
 logger.setLevel(logging.DEBUG)
 
 
-async def handle_command(
-    command: str, programs: list[Program], config_file_path: str
-) -> str:
+async def handle_command(command: str, taskmaster: TaskMaster) -> str:
     command = command.split()
     return_string = ""
     if len(command) == 0:
@@ -30,7 +31,7 @@ async def handle_command(
     else:
         action = command[0]
         program_name = command[1]
-        task = find_process_in_list(program_name, programs)
+        task = taskmaster.programs.get(program_name)
         if task is None:
             logger.info(f"Process group {program_name} not in config file")
             return f"Process group {program_name} not in config file"
@@ -47,9 +48,9 @@ async def handle_command(
             await task.restart()
             return "Task restarted"
         case "status":
-            return show_status(programs, return_string)
+            return show_status(taskmaster.programs, return_string)
         case "reload":
-            task_list = reload_config_file(config_file_path, programs)
+            task_list = reload_config_file(taskmaster)
             return "Config file reloaded"
         case "exit":
             exit_action(
