@@ -55,6 +55,13 @@ def are_programs_different(old_program: Program, new_program: Program) -> bool:
 
     return False
 
+def compare_programs(model1: BaseModel, model2: BaseModel) -> Dict[str, Dict[str, Any]]:
+    differences = {}
+    for field in model1.__fields__:
+        value1, value2 = getattr(model1, field), getattr(model2, field)
+        if value1 != value2:
+            differences[field] = {'model1': value1, 'model2': value2}
+    return differences
 
 def reload_config_file(
     file_path: str, old_programs: list[Program]

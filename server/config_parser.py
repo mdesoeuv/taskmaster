@@ -6,7 +6,7 @@ from exceptions import ConfigError
 from typing import List
 from enums import Signal, AutoRestart
 from exceptions import TaskDefinitionError
-from program import Program
+from program_definition import ProgramDefinition
 
 try:
     from yaml import CLoader as Loader
@@ -38,12 +38,12 @@ def format_env(env: dict) -> dict:
     return formatted
 
 
-async def define_programs(config: dict, programs: List[Program]):
+async def define_programs(config: dict, programs_definition: List[ProgramDefinition]):
     program_list = config["programs"].keys()
     for program in program_list:
         prog = config["programs"][program]
         try:
-            program = Program(
+            program = ProgramDefinition(
                 name=program,
                 cmd=prog.get("cmd"),
                 numprocs=prog.get("numprocs"),
@@ -68,12 +68,12 @@ async def define_programs(config: dict, programs: List[Program]):
                 "Error while parsing task definition. "
                 "Check the configuration file: " + str(e)
             )
-        programs.append(program)
-        if len(programs) == 0:
+        programs_definition.append(program)
+        if len(programs_definition) == 0:
             raise TaskDefinitionError(
-                "No task defined in the configuration file."
+                "No program defined in the configuration file."
             )
-    return programs
+    return programs_definition
 
 
 def parse_arguments() -> argparse.Namespace:
