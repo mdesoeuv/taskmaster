@@ -2,7 +2,6 @@ import asyncio
 import logging
 import pathlib
 import signal
-from typing import Dict
 from config_parser import (
     config_file_parser,
     parse_arguments,
@@ -11,7 +10,6 @@ from config_parser import (
 from functools import partial
 from command_handler import handle_command
 from actions import exit_action, launch_programs
-from program import Program
 from taskmaster import TaskMaster
 
 logger = logging.getLogger("taskmaster")

@@ -27,7 +27,9 @@ def find_process_in_list(program_name: str, program_list: list[Program]):
 
 async def exit_action(programs: Dict[str, Program]):
     logger.info("Exiting all processes...")
-    await asyncio.gather(*[program.stop() for program in programs.values()])
+    # await asyncio.gather(*[program.stop() for program in programs.values()])
+    for program in programs.values():
+        program.kill()
 
 
 def are_program_def_different(
