@@ -3,10 +3,10 @@ import argparse
 import yaml
 import pathlib
 from exceptions import ConfigError
-from typing import Dict, List
+from typing import Dict
 from enums import Signal, AutoRestart
 from exceptions import TaskDefinitionError
-from program_definition import ProgramDefinition
+from definitions import ProgramDefinition
 
 try:
     from yaml import CLoader as Loader
@@ -52,7 +52,7 @@ async def define_programs(
                 cmd=prog.get("cmd"),
                 numprocs=prog.get("numprocs"),
                 umask=prog.get("umask"),
-                workingdir=prog.get("workingdir"),
+                cwd=prog.get("workingdir"),
                 autostart=prog.get("autostart"),
                 autorestart=AutoRestart(str(prog.get("autorestart")).lower()),
                 exitcodes=prog.get("exitcodes"),

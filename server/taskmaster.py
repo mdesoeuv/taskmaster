@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from yamldataclassconfig.config import YamlDataClassConfig
-from program_definition import ProgramDefinition
+from definitions import ProgramDefinition
 from program import Program
 from typing import Dict
 import pathlib

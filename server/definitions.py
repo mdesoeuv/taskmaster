@@ -10,7 +10,7 @@ class ProgramDefinition(YamlDataClassConfig):
     cmd: str
     numprocs: int = 1
     umask: str = "022"
-    workingdir: str = "/tmp"
+    cwd: str = "/tmp"
     autostart: bool = True
     autorestart: AutoRestart = AutoRestart.unexpected
     exitcodes: List[int] = field(default_factory=lambda: [0, 1])

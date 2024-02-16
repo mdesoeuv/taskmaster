@@ -1,7 +1,7 @@
-import asyncio
 import logging
 from typing import Dict
 from program import Program
+from definitions import ProgramDefinition
 from dataclasses import dataclass
 from config_parser import (
     config_file_parser,
@@ -9,7 +9,6 @@ from config_parser import (
     ConfigError,
     define_programs,
 )
-from program_definition import ProgramDefinition
 from exceptions import ProcessException
 from taskmaster import TaskMaster
 
@@ -32,39 +31,6 @@ async def exit_action(programs: Dict[str, Program]):
         program.kill()
 
 
-def are_program_def_different(
-    old_program: ProgramDefinition, new_program: ProgramDefinition
-) -> bool:
-    # Compare only the specified attributes
-    attrs_to_compare = [
-        "name",
-        "cmd",
-        "numprocs",
-        "umask",
-        "workingdir",
-        "autostart",
-        "autorestart",
-        "exitcodes",
-        "startretries",
-        "starttime",
-        "stoptime",
-        "stopsignal",
-        "stdout",
-        "stderr",
-        "env",
-    ]
-
-    for attr in attrs_to_compare:
-        old_attr = getattr(old_program, attr)
-        new_attr = getattr(new_program, attr)
-
-        if old_attr != new_attr:
-            print(f"Attribute {attr} has changed")
-            return True
-
-    return False
-
-
 @dataclass
 class ProgramUpdate:
     program: Program
@@ -81,21 +47,16 @@ async def reload_config_file(taskmaster: TaskMaster) -> str:
         for old_program_name, old_program in taskmaster.programs.items():
             # old process group that is no longer in config
             if old_program_name not in new_programs_definition.keys():
+                logger.debug(
+                    f"Process group {old_program_name} is no longer in config, killing Program..."
+                )
                 old_program.kill()
             else:
-                # compare old and new program
-                if are_program_def_different(
-                    taskmaster.programs_definition[old_program_name],
-                    new_programs_definition[old_program_name],
-                ):
-                    logger.info(
-                        f"Process group {old_program_name} has changed. Reloading process group..."
-                    )
-                    old_program.update(
-                        new_programs_definition[old_program_name]
-                    )
-                else:
-                    logger.info(f"Process group {old_program_name} unchanged")
+                logger.debug(
+                    f"Process group {old_program_name} is still in config, updating..."
+                )
+                # compare old and new programs
+                old_program.update(new_programs_definition[old_program_name])
                 updated_programs[old_program_name] = old_program
 
         # new process groups which where not in old process group list
