@@ -115,11 +115,12 @@ async def reload_config_file(taskmaster: TaskMaster) -> str:
                 programs_to_add[new_program_name] = new_program_definition
 
         # add new programs
-        updated_programs: Dict[str, Program] = launch_programs(
+        updated_programs: Dict[str, Program] = await launch_programs(
             programs_to_add, updated_programs
         )
 
         # update changed programs
+        print("Updated programs: ", updated_programs)
         taskmaster.programs = updated_programs
         taskmaster.programs_definition = new_programs_definition
 

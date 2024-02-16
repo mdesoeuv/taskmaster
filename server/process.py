@@ -124,11 +124,15 @@ class Process:
 
     def kill(self):
         self.autorestart = AutoRestart.false
+        print(f"Killing process {self.name}: {self.process}")
         if self.process:
-            self.process.kill()
-            self.stopped_at = datetime.now()
-            self.status = Status.FATAL
-            logger.info(f"Process {self.name} killed")
+            try:
+                self.process.kill()
+                self.stopped_at = datetime.now()
+                self.status = Status.FATAL
+                logger.info(f"Process {self.name} killed")
+            except ProcessLookupError:
+                logger.info(f"Process {self.name} is already exited")
         else:
             logger.info(f"Process {self.name} is already stopped")
 
