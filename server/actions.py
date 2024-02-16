@@ -85,7 +85,7 @@ async def reload_config_file(taskmaster: TaskMaster) -> str:
         for old_program_name, old_program in taskmaster.programs.items():
             # old process group that is no longer in config
             if old_program_name not in new_programs_definition.keys():
-                await old_program.kill()
+                old_program.kill()
             else:
                 # compare old and new program
                 differences = compare_program_defintions(
@@ -98,7 +98,7 @@ async def reload_config_file(taskmaster: TaskMaster) -> str:
                     )
                     # TODO update only specific fields and do not kill if unnecessary
                     old_program.autorestart = False
-                    await old_program.kill()
+                    old_program.kill()
                     programs_to_add[old_program_name] = (
                         new_programs_definition[old_program_name]
                     )

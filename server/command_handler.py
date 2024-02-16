@@ -40,7 +40,7 @@ async def handle_command(command: str, taskmaster: TaskMaster) -> str:
         case "stop":
             return await task.stop()
         case "restart":
-            return await task.restart()
+            return task.restart()
         case "status":
             return show_status(taskmaster.programs, return_string)
         case "reload":

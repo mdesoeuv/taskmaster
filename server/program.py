@@ -73,7 +73,7 @@ class Program(ProgramDefinition):
                     )
                     continue
                 logger.debug(f"Stopping process {self.name}-{process_id}")
-                await self.processes[process_id].kill()
+                await self.processes[process_id].stop()
 
         except Exception as e:
             logger.error(f"Error stopping process: {e}")
@@ -81,18 +81,17 @@ class Program(ProgramDefinition):
         logger.info(f"Task {self.name} stopped successfully")
         return f"Task {self.name} stopped successfully"
 
-    async def restart(self):
+    def restart(self):
 
-        # self.stop()
-        await self.kill()
+        self.kill()
         for process in self.processes.values():
             process.reset()
         self.start()
         return "Program restarted"
 
-    async def kill(self):
+    def kill(self):
         for process in self.processes.values():
-            await process.kill()
+            process.kill()
         return "Program killed"
 
     def get_status(self) -> str:

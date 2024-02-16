@@ -95,7 +95,7 @@ class Process:
         )
         asyncio.create_task(self.start())
 
-    async def kill(self):
+    async def stop(self):
         logger.debug(
             f"Stopping process {self.name} with signal {self.stopsignal.signal}"
         )
@@ -109,9 +109,16 @@ class Process:
                 logger.info(f"Process {self.name} stopped")
                 self.status = Status.STOPPED
             except asyncio.TimeoutError:
-                self.process.kill()
-                self.status = Status.FATAL
-                logger.info(f"Process {self.name} killed")
+                self.kill()
+        else:
+            logger.info(f"Process {self.name} is already stopped")
+
+    def kill(self):
+        self.autorestart = AutoRestart.false
+        if self.process and self.process.returncode is None:
+            self.process.kill()
+            self.status = Status.FATAL
+            logger.info(f"Process {self.name} killed")
         else:
             logger.info(f"Process {self.name} is already stopped")
 
