@@ -52,7 +52,7 @@ class Program(ProgramDefinition):
                         f"Error starting process {self.name}-{process_id}: {e}"
                     )
                 logger.debug(
-                    f"Task {self.name}: {process_id}/{self.numprocs} started successfully"
+                    f"Task {self.name}: {process_id + 1}/{self.numprocs} started successfully"
                 )
 
         except Exception as e:
