@@ -3,10 +3,10 @@ import argparse
 import yaml
 import pathlib
 from exceptions import ConfigError
-from typing import List
+from typing import Dict, List
 from enums import Signal, AutoRestart
 from exceptions import TaskDefinitionError
-from process_group import ProcessGroup
+from program_definition import ProgramDefinition
 
 try:
     from yaml import CLoader as Loader
@@ -18,7 +18,7 @@ logging.basicConfig()
 logger.setLevel(logging.DEBUG)
 
 
-def config_file_parser(path: pathlib.Path) -> List[ProcessGroup]:
+def config_file_parser(path: pathlib.Path) -> Dict:
     if not path.exists() or path.is_dir():
         raise ConfigError(
             "The configuration `"
@@ -38,15 +38,17 @@ def format_env(env: dict) -> dict:
     return formatted
 
 
-async def define_process_groups(
-    config: dict, process_groups: List[ProcessGroup]
-):
-    programs = config["programs"].keys()
-    for program in programs:
-        prog = config["programs"][program]
+async def define_programs(
+    config: dict,
+) -> Dict[str, ProgramDefinition]:
+    print("define_programs")
+    programs_definition: Dict[str, ProgramDefinition] = {}
+    program_list = config["programs"].keys()
+    for program_name in program_list:
+        prog = config["programs"][program_name]
         try:
-            process_group = ProcessGroup(
-                name=program,
+            program = ProgramDefinition(
+                name=program_name,
                 cmd=prog.get("cmd"),
                 numprocs=prog.get("numprocs"),
                 umask=prog.get("umask"),
@@ -62,20 +64,18 @@ async def define_process_groups(
                 stderr=prog.get("stderr"),
                 env=format_env(prog.get("env", {})),
             )
-            if process_group.autostart:
-                await process_group.start()
         except Exception as e:
             logger.error("Error while parsing task definition.")
             raise TaskDefinitionError(
                 "Error while parsing task definition. "
                 "Check the configuration file: " + str(e)
             )
-        process_groups.append(process_group)
-        if len(process_groups) == 0:
+        programs_definition[program_name] = program
+        if len(programs_definition) == 0:
             raise TaskDefinitionError(
-                "No task defined in the configuration file."
+                "No program defined in the configuration file."
             )
-    return process_groups
+    return programs_definition
 
 
 def parse_arguments() -> argparse.Namespace:

@@ -4,34 +4,32 @@ import pathlib
 from config_parser import (
     config_file_parser,
     parse_arguments,
-    define_process_groups,
+    define_programs,
 )
-from process_group import ProcessGroup
 from functools import partial
 from command_handler import handle_command
+from actions import launch_programs
+from taskmaster import TaskMaster
 
 logger = logging.getLogger("taskmaster")
 logging.basicConfig()
 logger.setLevel(logging.DEBUG)
 
-process_groups: list[ProcessGroup] = []
-config_file_path: str = ""
+taskmaster: TaskMaster
 
 
-async def launch_taskmaster(
-    config_file_path: str, process_groups: list[ProcessGroup]
-):
-    config = config_file_parser(pathlib.Path(config_file_path))
-    await define_process_groups(config, process_groups)
-    # create a task group per task and a task per process in the task group
+async def launch_taskmaster(taskmaster: TaskMaster):
+    config = config_file_parser(taskmaster.config_file)
+    taskmaster.programs_definition = await define_programs(config)
+    await launch_programs(taskmaster.programs_definition, taskmaster.programs)
 
 
 async def handle_client(
     reader: asyncio.StreamReader,
     writer: asyncio.StreamWriter,
-    process_groups: list[ProcessGroup],
-    config_file_path: str,
+    taskmaster: TaskMaster,
 ):
+
     print("Client connected")
     while True:
         data = await reader.read(100)
@@ -39,9 +37,7 @@ async def handle_client(
             break
         message = data.decode()
         print(f"Received: {message}")
-        response = await handle_command(
-            message, process_groups, config_file_path
-        )
+        response = await handle_command(message, taskmaster)
         if response:
             writer.write(response.encode())
             await writer.drain()
@@ -51,29 +47,21 @@ async def handle_client(
 
 
 async def main():
-    global process_groups
-    global config_file_path
+    global taskmaster
 
     args = parse_arguments()
     port: int = args.server_port
-    config_file_path = args.configuration_file_path
-
+    config_file = pathlib.Path(args.configuration_file_path)
+    taskmaster = TaskMaster(config_file=config_file)
     server = await asyncio.start_server(
-        partial(
-            handle_client,
-            process_groups=process_groups,
-            config_file_path=config_file_path,
-        ),
+        partial(handle_client, taskmaster=taskmaster),
         "127.0.0.1",
         port,
     )
     addr = server.sockets[0].getsockname()
     print(f"Server listening on {addr}")
 
-    taskmaster = asyncio.create_task(
-        launch_taskmaster(config_file_path, process_groups)
-    )
-
+    taskmaster = asyncio.create_task(launch_taskmaster(taskmaster))
     async with server:
         await asyncio.gather(server.serve_forever(), taskmaster)
 

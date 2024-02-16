@@ -3,6 +3,7 @@ import logging
 from dataclasses import dataclass
 from typing import List
 from enums import AutoRestart, Status, Signal
+from datetime import datetime
 
 logger = logging.getLogger("taskmaster: " + __name__)
 logging.basicConfig()
@@ -30,13 +31,15 @@ class Process:
     stopsignal: Signal = Signal("TERM")
     returncode: int = None
     retries: int = 0
-    stopflag: bool = False
+    started_at: int = 0
+    stopped_at: int = 0
 
     async def start(self):
-        if self.stopflag:
-            return
+
         try:
             self.status = Status.STARTING
+            self.returncode = None
+            self.stopped_at = 0
             # Adjusted to use asyncio's subprocess and properly handle stdout/stderr
             self.process = await asyncio.create_subprocess_exec(
                 *self.cmd.split(),
@@ -53,23 +56,23 @@ class Process:
                     else open(self.stderr, "w")
                 ),
             )
+            self.started_at = datetime.now()
             logger.debug(
                 f"Process {self.name}, pid {self.process.pid}, STARTING"
             )
-            await asyncio.sleep(self.starttime)
-            self.status = Status.RUNNING
-            logger.debug(
-                f"Process {self.name}, pid {self.process.pid}, RUNNING"
-            )
+            asyncio.create_task(self.watch_successfull_start())
             await self.monitor_process()
         except Exception as e:
+            self.stopped_at = datetime.now()
             self.status = Status.FATAL
             logger.error(f"Error in start process function: {e}")
             self.retry()
+        return f"Process {self.name} started successfully."
 
     async def monitor_process(self):
         # Wait for the process to finish asynchronously
         self.returncode = await self.process.wait()
+        self.stopped_at = datetime.now()
         logger.debug(f"Process {self.name} exited with code {self.returncode}")
         if self.returncode not in self.exitcodes:
             logger.error(
@@ -96,19 +99,54 @@ class Process:
         )
         asyncio.create_task(self.start())
 
-    async def kill(self):
-        self.stopflag = True
-        logger.debug(f"Stopping process {self.name} with signal {self.stopsignal.signal}")
-        if self.process and self.process.returncode is None:
+    async def stop(self):
+        logger.debug(
+            f"Stopping process {self.name} with signal {self.stopsignal.signal}"
+        )
+        if self.process:
             self.process.send_signal(self.stopsignal.signal)
             self.status = Status.STOPPING
             try:
-                await asyncio.wait_for(self.process.wait(), timeout=self.stoptime)
+                await asyncio.wait_for(
+                    self.process.wait(), timeout=self.stoptime
+                )
                 logger.info(f"Process {self.name} stopped")
+                self.stopped_at = datetime.now()
                 self.status = Status.STOPPED
             except asyncio.TimeoutError:
-                self.process.kill()
-                self.status = Status.FATAL
-                logger.info(f"Process {self.name} killed")
+                self.kill()
         else:
             logger.info(f"Process {self.name} is already stopped")
+
+    def kill(self):
+        self.autorestart = AutoRestart.false
+        print(f"Killing process {self.name}: {self.process}")
+        if self.process:
+            try:
+                self.process.kill()
+                self.stopped_at = datetime.now()
+                self.status = Status.FATAL
+                logger.info(f"Process {self.name} killed")
+            except ProcessLookupError:
+                logger.info(f"Process {self.name} is already exited")
+        else:
+            logger.info(f"Process {self.name} is already stopped")
+
+    def reset(self):
+        self.retries = 0
+
+    def get_uptime(self) -> int:
+        difference = (
+            self.stopped_at - self.started_at
+            if self.stopped_at
+            else datetime.now() - self.started_at
+        )
+        return str(difference)
+
+    async def watch_successfull_start(self):
+        await asyncio.sleep(self.starttime)
+        if self.returncode is None:
+            self.status = Status.RUNNING
+            logger.debug(
+                f"Process {self.name}, pid {self.process.pid}, RUNNING"
+            )
