@@ -11,7 +11,6 @@ from config_parser import (
 from program_definition import ProgramDefinition
 from exceptions import ProcessException
 from taskmaster import TaskMaster
-from process import Process
 
 logger = logging.getLogger("taskmaster: " + __name__)
 logging.basicConfig()
@@ -32,7 +31,7 @@ def exit_action(programs: Dict[str, Program]):
     exit(0)
 
 
-def compare_program_defintions(
+def are_program_def_different(
     old_program: ProgramDefinition, new_program: ProgramDefinition
 ) -> bool:
     # Compare only the specified attributes
@@ -47,8 +46,8 @@ def compare_program_defintions(
         "exitcodes",
         "startretries",
         "starttime",
-        "stopsignal",
         "stoptime",
+        "stopsignal",
         "stdout",
         "stderr",
         "env",
@@ -59,14 +58,10 @@ def compare_program_defintions(
         new_attr = getattr(new_program, attr)
 
         if old_attr != new_attr:
-            # todo fix verification of depth
-            print(old_program.stopsignal.signal)
-            print(new_program.stopsignal.signal)
             print(f"Attribute {attr} has changed")
             return True
 
     return False
-
 
 @dataclass
 class ProgramUpdate:
@@ -88,11 +83,10 @@ async def reload_config_file(taskmaster: TaskMaster) -> str:
                 old_program.kill()
             else:
                 # compare old and new program
-                differences = compare_program_defintions(
+                if are_program_def_different(
                     taskmaster.programs_definition[old_program_name],
                     new_programs_definition[old_program_name],
-                )
-                if differences:
+                ):
                     logger.info(
                         f"Process group {old_program_name} has changed. Reloading process group..."
                     )
@@ -120,7 +114,6 @@ async def reload_config_file(taskmaster: TaskMaster) -> str:
         )
 
         # update changed programs
-        print("Updated programs: ", updated_programs)
         taskmaster.programs = updated_programs
         taskmaster.programs_definition = new_programs_definition
 

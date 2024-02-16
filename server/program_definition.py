@@ -16,7 +16,7 @@ class ProgramDefinition(YamlDataClassConfig):
     exitcodes: List[int] = field(default_factory=lambda: [0, 1])
     startretries: int = 3
     starttime: int = 0
-    stopsignal: Signal = Signal("TERM")
+    stopsignal: str = Signal("TERM").signal
     stoptime: int = 10
     stdout: str = "/dev/null"
     stderr: str = "/dev/null"

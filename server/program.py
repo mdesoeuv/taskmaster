@@ -26,9 +26,19 @@ class Program(ProgramDefinition):
     def start(self):
         logger.info(f"Starting task {self.name}")
         errors = 0
+        processes_already_started = 0
         try:
             for process_id in range(self.numprocs):
                 try:
+                    if self.processes.get(process_id) is not None and (
+                        self.processes[process_id].status == Status.RUNNING
+                        or self.processes[process_id].status == Status.STARTING
+                    ):
+                        logger.info(
+                            f"Process {self.name}-{process_id} is already running"
+                        )
+                        processes_already_started += 1
+                        continue
                     self.processes[process_id] = Process(
                         name=f"{self.name}-{process_id}",
                         cmd=self.cmd,
@@ -54,13 +64,14 @@ class Program(ProgramDefinition):
                 logger.debug(
                     f"Task {self.name}: {process_id + 1}/{self.numprocs} started successfully"
                 )
-
         except Exception as e:
             logger.error(f"Error starting Program: {e}")
             errors += 1
             return f"Error starting Program {self.name}: {self.numprocs - errors}/{self.numprocs} started successfully"
         logger.debug(f"Task {self.name} started successfully")
-        return f"Task {self.name} started successfully"
+        if processes_already_started == self.numprocs:
+            return f"Task {self.name} is already running"
+        return f"Task {self.name}: {self.numprocs - errors}/{self.numprocs} started successfully, {processes_already_started} already running, {errors} failed"
 
     async def stop(self):
         logger.info(f"Stopping task {self.name}")

@@ -58,7 +58,7 @@ async def define_programs(
                 exitcodes=prog.get("exitcodes"),
                 startretries=prog.get("startretries"),
                 starttime=prog.get("starttime"),
-                stopsignal=Signal(prog.get("stopsignal")),
+                stopsignal=Signal(prog.get("stopsignal", "TERM")).signal,
                 stoptime=prog.get("stoptime"),
                 stdout=prog.get("stdout"),
                 stderr=prog.get("stderr"),

@@ -35,7 +35,6 @@ class Process:
     stopped_at: int = 0
 
     async def start(self):
-
         try:
             self.status = Status.STARTING
             self.returncode = None
@@ -101,10 +100,10 @@ class Process:
 
     async def stop(self):
         logger.debug(
-            f"Stopping process {self.name} with signal {self.stopsignal.signal}"
+            f"Stopping process {self.name} with signal {self.stopsignal}"
         )
         if self.process:
-            self.process.send_signal(self.stopsignal.signal)
+            self.process.send_signal(self.stopsignal)
             self.status = Status.STOPPING
             try:
                 await asyncio.wait_for(
