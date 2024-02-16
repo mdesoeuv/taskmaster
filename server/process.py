@@ -60,11 +60,7 @@ class Process:
             logger.debug(
                 f"Process {self.name}, pid {self.process.pid}, STARTING"
             )
-            await asyncio.sleep(self.starttime)
-            self.status = Status.RUNNING
-            logger.debug(
-                f"Process {self.name}, pid {self.process.pid}, RUNNING"
-            )
+            asyncio.create_task(self.watch_successfull_start())
             await self.monitor_process()
         except Exception as e:
             self.stopped_at = datetime.now()
@@ -140,5 +136,17 @@ class Process:
         self.retries = 0
 
     def get_uptime(self) -> int:
-        difference = self.stopped_at - self.started_at if self.stopped_at else datetime.now() - self.started_at
+        difference = (
+            self.stopped_at - self.started_at
+            if self.stopped_at
+            else datetime.now() - self.started_at
+        )
         return str(difference)
+
+    async def watch_successfull_start(self):
+        await asyncio.sleep(self.starttime)
+        if self.returncode is None:
+            self.status = Status.RUNNING
+            logger.debug(
+                f"Process {self.name}, pid {self.process.pid}, RUNNING"
+            )
