@@ -1,14 +1,3 @@
-import os
-import time
-
-
-def format_uptime(seconds):
-    hours = seconds // 3600
-    minutes = (seconds % 3600) // 60
-    seconds = seconds % 60
-    return f"{int(hours):02d}:{int(minutes):02d}:{int(seconds):02d}"
-
-
 def get_process_name(pid):
     print(f"Getting process name for pid {pid}")
     try:

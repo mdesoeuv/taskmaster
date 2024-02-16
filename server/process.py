@@ -56,7 +56,7 @@ class Process:
                     else open(self.stderr, "w")
                 ),
             )
-            self.started_at = datetime.now().timestamp()
+            self.started_at = datetime.now()
             logger.debug(
                 f"Process {self.name}, pid {self.process.pid}, STARTING"
             )
@@ -67,7 +67,7 @@ class Process:
             )
             await self.monitor_process()
         except Exception as e:
-            self.stopped_at = datetime.now().timestamp()
+            self.stopped_at = datetime.now()
             self.status = Status.FATAL
             logger.error(f"Error in start process function: {e}")
             self.retry()
@@ -76,7 +76,7 @@ class Process:
     async def monitor_process(self):
         # Wait for the process to finish asynchronously
         self.returncode = await self.process.wait()
-        self.stopped_at = datetime.now().timestamp()
+        self.stopped_at = datetime.now()
         logger.debug(f"Process {self.name} exited with code {self.returncode}")
         if self.returncode not in self.exitcodes:
             logger.error(
@@ -115,7 +115,7 @@ class Process:
                     self.process.wait(), timeout=self.stoptime
                 )
                 logger.info(f"Process {self.name} stopped")
-                self.stopped_at = datetime.now().timestamp()
+                self.stopped_at = datetime.now()
                 self.status = Status.STOPPED
             except asyncio.TimeoutError:
                 self.kill()
@@ -126,7 +126,7 @@ class Process:
         self.autorestart = AutoRestart.false
         if self.process:
             self.process.kill()
-            self.stopped_at = datetime.now().timestamp()
+            self.stopped_at = datetime.now()
             self.status = Status.FATAL
             logger.info(f"Process {self.name} killed")
         else:
@@ -136,6 +136,5 @@ class Process:
         self.retries = 0
 
     def get_uptime(self) -> int:
-        if self.stopped_at:
-            return int(self.stopped_at - self.started_at)
-        return int(datetime.now().timestamp() - self.started_at)
+        difference = self.stopped_at - self.started_at if self.stopped_at else datetime.now() - self.started_at
+        return str(difference)
