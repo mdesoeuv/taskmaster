@@ -30,11 +30,9 @@ class Process:
     stopsignal: Signal = Signal("TERM")
     returncode: int = None
     retries: int = 0
-    stopflag: bool = False
 
     async def start(self):
-        if self.stopflag:
-            return
+
         try:
             self.status = Status.STARTING
             # Adjusted to use asyncio's subprocess and properly handle stdout/stderr
@@ -66,6 +64,7 @@ class Process:
             self.status = Status.FATAL
             logger.error(f"Error in start process function: {e}")
             self.retry()
+        return f"Process {self.name} started successfully."
 
     async def monitor_process(self):
         # Wait for the process to finish asynchronously
@@ -97,7 +96,6 @@ class Process:
         asyncio.create_task(self.start())
 
     async def kill(self):
-        self.stopflag = True
         logger.debug(
             f"Stopping process {self.name} with signal {self.stopsignal.signal}"
         )
@@ -116,3 +114,6 @@ class Process:
                 logger.info(f"Process {self.name} killed")
         else:
             logger.info(f"Process {self.name} is already stopped")
+
+    def reset(self):
+        self.retries = 0

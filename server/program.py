@@ -41,7 +41,6 @@ class Program(ProgramDefinition):
                         stopsignal=self.stopsignal,
                         starttime=self.starttime,
                         stoptime=self.stoptime,
-                        stopflag=False,
                         autorestart=self.autorestart,
                         startretries=self.startretries,
                     )
@@ -53,17 +52,15 @@ class Program(ProgramDefinition):
                         f"Error starting process {self.name}-{process_id}: {e}"
                     )
                 logger.debug(
-                    f"Task {self.name}: {self.numprocs - errors}/{self.numprocs} started successfully"
+                    f"Task {self.name}: {process_id}/{self.numprocs} started successfully"
                 )
 
         except Exception as e:
-            logger.error(f"Error starting processGroup: {e}")
+            logger.error(f"Error starting Program: {e}")
             errors += 1
-            self.status[process_id] = Status.FATAL
-        # logger.info(
-        #     f"Task {self.name}: {self.numprocs - errors}/{self.numprocs} started successfully"
-        # )
+            return f"Error starting Program {self.name}: {self.numprocs - errors}/{self.numprocs} started successfully"
         logger.debug(f"Task {self.name} started successfully")
+        return f"Task {self.name} started successfully"
 
     async def stop(self):
         logger.info(f"Stopping task {self.name}")
@@ -80,16 +77,31 @@ class Program(ProgramDefinition):
 
         except Exception as e:
             logger.error(f"Error stopping process: {e}")
+            return f"Error stopping task {self.name}: {e}"
         logger.info(f"Task {self.name} stopped successfully")
+        return f"Task {self.name} stopped successfully"
 
-    def restart(self):
-        self.stop()
+    async def restart(self):
+
+        # self.stop()
+        await self.kill()
+        for process in self.processes.values():
+            process.reset()
         self.start()
+        return "Program restarted"
+
+    async def kill(self):
+        for process in self.processes.values():
+            await process.kill()
+        return "Program killed"
 
     def get_status(self) -> str:
         print("Getting status")
         for process_id in range(self.numprocs):
-            if self.processes.get(process_id):
+            if (
+                self.processes.get(process_id)
+                and self.processes[process_id].process
+            ):
                 pid = self.processes[process_id].process.pid
                 status = self.processes[process_id].status
                 return f"{self.name}-{process_id}: {status} (pid {pid}), uptime "  # {get_process_uptime(pid)}"
