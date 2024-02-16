@@ -21,7 +21,7 @@ programs:
       ANSWER: 42
 
   sleep:
-    cmd: "/bin/sleep 1000"
+    cmd: "/bin/sleep 3"
     numprocs: 1
     umask: 022
     workingdir: /home/mdesoeuv/Projects/taskmaster
@@ -31,6 +31,25 @@ programs:
     - 0
     startretries: 3
     starttime: 10
+    stopsignal: USR1
+    stoptime: 3
+    stdout: /home/mdesoeuv/Projects/taskmaster/logs/sleep.stdout
+    stderr: /home/mdesoeuv/Projects/taskmaster/logs/sleep.stderr
+    env:
+      STARTED_BY: taskmaster
+      ANSWER: 42
+
+  sleep3:
+    cmd: "/bin/sleep 5"
+    numprocs: 2
+    umask: 022
+    workingdir: /home/mdesoeuv/Projects/taskmaster
+    autostart: false
+    autorestart: unexpected
+    exitcodes:
+    - 0
+    startretries: 3
+    starttime: 2
     stopsignal: USR1
     stoptime: 3
     stdout: /home/mdesoeuv/Projects/taskmaster/logs/sleep.stdout
