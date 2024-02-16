@@ -35,6 +35,7 @@ class Process:
 
         try:
             self.status = Status.STARTING
+            self.returncode = None
             # Adjusted to use asyncio's subprocess and properly handle stdout/stderr
             self.process = await asyncio.create_subprocess_exec(
                 *self.cmd.split(),
@@ -99,7 +100,7 @@ class Process:
         logger.debug(
             f"Stopping process {self.name} with signal {self.stopsignal.signal}"
         )
-        if self.process and self.process.returncode is None:
+        if self.process:
             self.process.send_signal(self.stopsignal.signal)
             self.status = Status.STOPPING
             try:
@@ -115,7 +116,7 @@ class Process:
 
     def kill(self):
         self.autorestart = AutoRestart.false
-        if self.process and self.process.returncode is None:
+        if self.process:
             self.process.kill()
             self.status = Status.FATAL
             logger.info(f"Process {self.name} killed")

@@ -103,6 +103,7 @@ class Program(ProgramDefinition):
             ):
                 pid = self.processes[process_id].process.pid
                 status = self.processes[process_id].status
-                return f"{self.name}-{process_id}: {status} (pid {pid}), uptime "  # {get_process_uptime(pid)}"
+                returncode = self.processes[process_id].returncode
+                return f"{self.name}-{process_id}: {status} ({returncode}), pid {pid}, uptime "  # {get_process_uptime(pid)}"
             else:
                 return f"{self.name}-{process_id}: STOPPED"
