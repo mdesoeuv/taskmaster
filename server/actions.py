@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Dict
 from program import Program
@@ -24,11 +25,9 @@ def find_process_in_list(program_name: str, program_list: list[Program]):
     return None
 
 
-def exit_action(programs: Dict[str, Program]):
+async def exit_action(programs: Dict[str, Program]):
     logger.info("Exiting all processes...")
-    for program in programs.values():
-        program.stop()
-    exit(0)
+    await asyncio.gather(*[program.stop() for program in programs.values()])
 
 
 def are_program_def_different(
@@ -62,6 +61,7 @@ def are_program_def_different(
             return True
 
     return False
+
 
 @dataclass
 class ProgramUpdate:
