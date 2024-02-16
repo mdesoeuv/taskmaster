@@ -16,8 +16,6 @@ logger = logging.getLogger("taskmaster")
 logging.basicConfig()
 logger.setLevel(logging.DEBUG)
 
-taskmaster: TaskMaster
-
 
 async def launch_taskmaster(taskmaster: TaskMaster):
     config = config_file_parser(taskmaster.config_file)
@@ -50,21 +48,19 @@ async def handle_client(
         await writer.wait_closed()
 
 
-async def shutdown(server, loop, taskmaster: TaskMaster):
+async def shutdown(server: asyncio.Server, taskmaster: TaskMaster):
     server.close()
     await server.wait_closed()
     await exit_action(taskmaster.programs)
 
 
 async def main():
-    global taskmaster
-
     loop = asyncio.get_running_loop()
 
     args = parse_arguments()
     port: int = args.server_port
     config_file = pathlib.Path(args.configuration_file_path)
-    taskmaster = TaskMaster(config_file=config_file)
+    taskmaster: TaskMaster = TaskMaster(config_file=config_file)
 
     server = await asyncio.start_server(
         partial(handle_client, taskmaster=taskmaster),
@@ -79,7 +75,7 @@ async def main():
     for signame in ("SIGINT", "SIGTERM"):
         loop.add_signal_handler(
             getattr(signal, signame),
-            lambda: asyncio.create_task(shutdown(server, loop, taskmaster)),
+            lambda: asyncio.create_task(shutdown(server, taskmaster)),
         )
 
     async with server:
@@ -89,7 +85,6 @@ async def main():
             # This exception is expected during shutdown, so you can ignore it
             logger.info("Server tasks cancelled as part of shutdown process.")
         except Exception as e:
-            # Handle unexpected errors
             logger.error(f"Unexpected error: {e}")
 
 
