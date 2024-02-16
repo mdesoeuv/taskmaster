@@ -7,7 +7,6 @@ from exceptions import ProcessException
 from process import Process
 from enums import Status
 from program_definition import ProgramDefinition
-from tools import format_uptime
 
 logger = logging.getLogger("taskmaster: " + __name__)
 logging.basicConfig()
@@ -97,6 +96,7 @@ class Program(ProgramDefinition):
 
     def get_status(self) -> str:
         print("Getting status")
+        return_string = ""
         for process_id in range(self.numprocs):
             if (
                 self.processes.get(process_id)
@@ -105,7 +105,8 @@ class Program(ProgramDefinition):
                 pid = self.processes[process_id].process.pid
                 status = self.processes[process_id].status
                 returncode = self.processes[process_id].returncode
-                uptime = format_uptime(self.processes[process_id].get_uptime())
-                return f"{self.name}-{process_id}: {status} ({returncode}), pid {pid}, uptime {uptime}"
+                uptime = self.processes[process_id].get_uptime()
+                return_string += f"{self.name}-{process_id}: {status} ({returncode}), pid {pid}, uptime {uptime}\n"
             else:
-                return f"{self.name}-{process_id}: STOPPED"
+                return_string += f"{self.name}-{process_id}: STOPPED\n"
+        return return_string
