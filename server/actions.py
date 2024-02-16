@@ -73,7 +73,6 @@ class ProgramUpdate:
 
 async def reload_config_file(taskmaster: TaskMaster) -> str:
     logger.info("Reloading config file...")
-    programs_to_update: Dict[str, ProgramUpdate] = {}
     programs_to_add: Dict[str, ProgramDefinition] = {}
     updated_programs: Dict[str, Program] = {}
     try:
@@ -92,15 +91,12 @@ async def reload_config_file(taskmaster: TaskMaster) -> str:
                     logger.info(
                         f"Process group {old_program_name} has changed. Reloading process group..."
                     )
-                    # TODO update only specific fields and do not kill if unnecessary
-                    old_program.autorestart = False
-                    old_program.kill()
-                    programs_to_add[old_program_name] = (
+                    old_program.update(
                         new_programs_definition[old_program_name]
                     )
                 else:
                     logger.info(f"Process group {old_program_name} unchanged")
-                    updated_programs[old_program_name] = old_program
+                updated_programs[old_program_name] = old_program
 
         # new process groups which where not in old process group list
         for (

@@ -105,6 +105,26 @@ class Program(ProgramDefinition):
             process.kill()
         return "Program killed"
 
+    def update(self, new_program: ProgramDefinition):
+        # check if critical attributes have changed
+        # kill -> all except :
+        # numprocs
+        # autostart
+        # autorestart
+        # exitcodes
+        # startretries
+        # starttime
+        # stopsignal
+        # stoptime
+        # if yes, kill all processes and relaunch them
+        # if no, update the program attributes
+        # finally remove extra processes if numprocs has decreased or add new processes if numprocs has increased
+
+        self.__dict__.update(new_program.__dict__)
+        for process in self.processes.values():
+            process.update(new_program)
+        return "Program updated"
+
     def get_status(self) -> str:
         print("Getting status")
         return_string = ""

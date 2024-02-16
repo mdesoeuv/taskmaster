@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import List
 from enums import AutoRestart, Status, Signal
 from datetime import datetime
+from program_definition import ProgramDefinition
 
 logger = logging.getLogger("taskmaster: " + __name__)
 logging.basicConfig()
@@ -149,3 +150,8 @@ class Process:
             logger.debug(
                 f"Process {self.name}, pid {self.process.pid}, RUNNING"
             )
+
+    def update(self, program_definition: ProgramDefinition):
+        self.__dict__.update(program_definition.__dict__)
+        logger.info(f"Process {self.name} updated")
+        return f"Process {self.name} updated successfully"
