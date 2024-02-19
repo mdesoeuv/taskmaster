@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import List
 from enums import AutoRestart, Status, Signal
 from datetime import datetime
+from definitions import ProgramDefinition
 
 logger = logging.getLogger("taskmaster: " + __name__)
 logging.basicConfig()
@@ -90,7 +91,7 @@ class Process:
             self.autorestart == AutoRestart.false
             or self.retries >= self.startretries
         ):
-            logger.error(f"Max retries reached for process {self.name}")
+            logger.error(f"AutoRestart set to False or Max retries reached for process {self.name}")
             return
         self.retries += 1
         logger.info(
@@ -149,3 +150,25 @@ class Process:
             logger.debug(
                 f"Process {self.name}, pid {self.process.pid}, RUNNING"
             )
+
+    def update(self, program_definition: ProgramDefinition):
+        keys = [
+            "cmd",
+            "cwd",
+            "env",
+            "umask",
+            "stdout",
+            "stderr",
+            "autorestart",
+            "exitcodes",
+            "startretries",
+            "starttime",
+            "stoptime",
+            "stopsignal",
+        ]
+        attributes = {
+            key: program_definition.__dict__[key] for key in set(keys)
+        }
+        self.__dict__.update(attributes)
+        logger.info(f"Process {self.name} updated")
+        return f"Process {self.name} updated successfully"

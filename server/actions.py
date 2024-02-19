@@ -1,6 +1,7 @@
 import logging
 from typing import Dict
 from program import Program
+from definitions import ProgramDefinition
 from dataclasses import dataclass
 from config_parser import (
     config_file_parser,
@@ -8,7 +9,6 @@ from config_parser import (
     ConfigError,
     define_programs,
 )
-from program_definition import ProgramDefinition
 from exceptions import ProcessException
 from taskmaster import TaskMaster
 
@@ -24,44 +24,12 @@ def find_process_in_list(program_name: str, program_list: list[Program]):
     return None
 
 
-def exit_action(programs: Dict[str, Program]):
+async def exit_action(programs: Dict[str, Program]):
     logger.info("Exiting all processes...")
+    # await asyncio.gather(*[program.stop() for program in programs.values()])
     for program in programs.values():
-        program.stop()
-    exit(0)
+        program.kill()
 
-
-def are_program_def_different(
-    old_program: ProgramDefinition, new_program: ProgramDefinition
-) -> bool:
-    # Compare only the specified attributes
-    attrs_to_compare = [
-        "name",
-        "cmd",
-        "numprocs",
-        "umask",
-        "workingdir",
-        "autostart",
-        "autorestart",
-        "exitcodes",
-        "startretries",
-        "starttime",
-        "stoptime",
-        "stopsignal",
-        "stdout",
-        "stderr",
-        "env",
-    ]
-
-    for attr in attrs_to_compare:
-        old_attr = getattr(old_program, attr)
-        new_attr = getattr(new_program, attr)
-
-        if old_attr != new_attr:
-            print(f"Attribute {attr} has changed")
-            return True
-
-    return False
 
 @dataclass
 class ProgramUpdate:
@@ -71,7 +39,6 @@ class ProgramUpdate:
 
 async def reload_config_file(taskmaster: TaskMaster) -> str:
     logger.info("Reloading config file...")
-    programs_to_update: Dict[str, ProgramUpdate] = {}
     programs_to_add: Dict[str, ProgramDefinition] = {}
     updated_programs: Dict[str, Program] = {}
     try:
@@ -80,25 +47,17 @@ async def reload_config_file(taskmaster: TaskMaster) -> str:
         for old_program_name, old_program in taskmaster.programs.items():
             # old process group that is no longer in config
             if old_program_name not in new_programs_definition.keys():
+                logger.debug(
+                    f"Process group {old_program_name} is no longer in config, killing Program..."
+                )
                 old_program.kill()
             else:
-                # compare old and new program
-                if are_program_def_different(
-                    taskmaster.programs_definition[old_program_name],
-                    new_programs_definition[old_program_name],
-                ):
-                    logger.info(
-                        f"Process group {old_program_name} has changed. Reloading process group..."
-                    )
-                    # TODO update only specific fields and do not kill if unnecessary
-                    old_program.autorestart = False
-                    old_program.kill()
-                    programs_to_add[old_program_name] = (
-                        new_programs_definition[old_program_name]
-                    )
-                else:
-                    logger.info(f"Process group {old_program_name} unchanged")
-                    updated_programs[old_program_name] = old_program
+                logger.debug(
+                    f"Process group {old_program_name} is still in config, updating..."
+                )
+                # compare old and new programs
+                old_program.update(new_programs_definition[old_program_name])
+                updated_programs[old_program_name] = old_program
 
         # new process groups which where not in old process group list
         for (
@@ -106,6 +65,9 @@ async def reload_config_file(taskmaster: TaskMaster) -> str:
             new_program_definition,
         ) in new_programs_definition.items():
             if new_program_name not in taskmaster.programs:
+                logger.debug(
+                    f"Process group {new_program_name} is new, adding Program..."
+                )
                 programs_to_add[new_program_name] = new_program_definition
 
         # add new programs

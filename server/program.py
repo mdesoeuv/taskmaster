@@ -1,21 +1,48 @@
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from typing import Dict
-from yamldataclassconfig.config import YamlDataClassConfig
+from typing import Dict, List
 from exceptions import ProcessException
 from process import Process
+from definitions import ProgramDefinition
 from enums import Status
-from program_definition import ProgramDefinition
 
 logger = logging.getLogger("taskmaster: " + __name__)
 logging.basicConfig()
 logger.setLevel(logging.DEBUG)
 
 
+def compare_programs(
+    old_program: ProgramDefinition, new_program: ProgramDefinition
+) -> List[str]:
+
+    differences = []
+
+    for attr in new_program.__dict__.keys():
+        if getattr(old_program, attr) != getattr(new_program, attr):
+            differences.append(attr)
+    return differences
+
+
+def critical_attribute(attributes: List[str]) -> bool:
+    critical = [
+        "name",
+        "cmd",
+        "workingdir",
+        "umask",
+        "stdout",
+        "stderr",
+    ]
+    intersection = list(set(attributes) & set(critical))
+    if intersection:
+        return True
+    return False
+
+
 @dataclass
 class Program(ProgramDefinition):
     processes: Dict[int, "Process"] = field(default_factory=dict)
+    state: Status = Status.STOPPED
 
     def __init__(self, program_definition: ProgramDefinition):
         # Init the ProgramDefinition attributes coming from herited class
@@ -25,6 +52,7 @@ class Program(ProgramDefinition):
 
     def start(self):
         logger.info(f"Starting task {self.name}")
+        self.state = Status.RUNNING
         errors = 0
         processes_already_started = 0
         try:
@@ -42,7 +70,7 @@ class Program(ProgramDefinition):
                     self.processes[process_id] = Process(
                         name=f"{self.name}-{process_id}",
                         cmd=self.cmd,
-                        cwd=self.workingdir,
+                        cwd=self.cwd,
                         env=self.env,
                         umask=self.umask,
                         stdout=self.stdout,
@@ -74,6 +102,7 @@ class Program(ProgramDefinition):
         return f"Task {self.name}: {self.numprocs - errors}/{self.numprocs} started successfully, {processes_already_started} already running, {errors} failed"
 
     async def stop(self):
+        self.state = Status.STOPPED
         logger.info(f"Stopping task {self.name}")
         try:
             # Wait for process to stop
@@ -101,9 +130,79 @@ class Program(ProgramDefinition):
         return "Program restarted"
 
     def kill(self):
+        self.state = Status.STOPPED
         for process in self.processes.values():
             process.kill()
         return "Program killed"
+
+    def update(self, new_program: ProgramDefinition):
+        # check if critical attributes have changed
+        # kill -> all except :
+        # numprocs
+        # autostart
+        # autorestart
+        # exitcodes
+        # startretries
+        # starttime
+        # stopsignal
+        # stoptime
+        # if yes, kill all processes and relaunch them
+        # if no, update the program attributes
+        # finally remove extra processes if numprocs has decreased or add new processes if numprocs has increased
+        differences = compare_programs(self, new_program)
+        print("Differences: ", differences)
+        if not differences:
+            logger.debug(f"No changes for process group {self.name}")
+            return "Program unchanged"
+
+        old_numprocs = self.numprocs
+        old_state = self.state
+
+        if critical_attribute(differences):
+            logger.info(
+                f"Critical attributes have changed for process group {self.name}. Reloading process group..."
+            )
+            self.kill()
+
+        logger.debug(f"Updating process group {self.name}...")
+        self.__dict__.update(new_program.__dict__)
+
+        # Add new processes
+        if self.numprocs > old_numprocs:
+            logger.debug(
+                f"Adding {self.numprocs - old_numprocs} new processes to process group {self.name}"
+            )
+            for process_id in range(old_numprocs, self.numprocs):
+                self.processes[process_id] = Process(
+                    name=f"{self.name}-{process_id}",
+                    cmd=self.cmd,
+                    cwd=self.cwd,
+                    env=self.env,
+                    umask=self.umask,
+                    stdout=self.stdout,
+                    stderr=self.stderr,
+                    exitcodes=self.exitcodes,
+                    stopsignal=self.stopsignal,
+                    starttime=self.starttime,
+                    stoptime=self.stoptime,
+                    autorestart=self.autorestart,
+                    startretries=self.startretries,
+                )
+        # Remove extra processes
+        elif self.numprocs < old_numprocs:
+            logger.debug(
+                f"Removing {old_numprocs - self.numprocs} processes from process group {self.name}"
+            )
+            for process_id in range(self.numprocs, old_numprocs):
+                self.processes[process_id].kill()
+                del self.processes[process_id]
+        logger.debug(f"Process group {self.name}: updating processes...")
+        for process in self.processes.values():
+            process.update(new_program)
+
+        if self.autostart or old_state == Status.RUNNING:
+            self.start()
+        return "Program updated"
 
     def get_status(self) -> str:
         print("Getting status")
