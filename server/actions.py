@@ -65,6 +65,9 @@ async def reload_config_file(taskmaster: TaskMaster) -> str:
             new_program_definition,
         ) in new_programs_definition.items():
             if new_program_name not in taskmaster.programs:
+                logger.debug(
+                    f"Process group {new_program_name} is new, adding Program..."
+                )
                 programs_to_add[new_program_name] = new_program_definition
 
         # add new programs
