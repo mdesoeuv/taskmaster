@@ -1,43 +1,73 @@
 # taskmaster
+42 School Project
 
-- Commande Reload : OK
-- SIGHUP : OK
-- Start Delay : changer en starttime validation selon le sujet
-- Task Status : Mehdi : OK -> valider
-- Kill : OK -> valider en testant differents signals
-- Stop Delay : changer en timeout de thread join apres avoir envoye le signal specifie
-- exit code et retries : Mehdi : OK -> valider
-- Ajouter un handler de type file pour le logger (doit logguer les actions du programme)
-- Ajouter un historique dans la ligne de commande : Victor
-- Etude de supervisord -> Verifier le comportement des toutes les commandes du sujet
-- 
-- Valider le comportement du restart vis a vis des retries and l'implementer (remettre les valeurs a 0 lors du restart) : Victor
-- Tester le CWD : Mehdi
-- Gestion de l'ecriture dans la console avec le multi-threading : Victor
-- Mise en forme de la verbose avec un niveau INFO correspondant a supervisord : Victor
-- Reload sans tuer les process si les parametres critiques sont constants ou qu'il s'agit d'augmenter le nombre de process
-- Valider le umask + documenter : Mehdi
-- Interpreter le stopsignal "USR1" de la config exemple du sujet
-- Gestion des parametres d'autorestart "unexpected, always, never" : Mehdi
-- Documentation 
-- Preparer des configs exemples diversifiee
-- Crash tests
-- Bonus
- 
-- The number of processes to start and keep running
-- Whether to start this program at launch or not
-- Whether the program should be restarted always, never, or on unexpected exits only
-- Which return codes represent an "expected" exit status
-- How long the program should be running after it’s started for it to be considered
-"successfully started"
-• How many times a restart should be attempted before aborting
-• Which signal should be used to stop (i.e. exit gracefully) the program
-• How long to wait after a graceful stop before killing the program
-• Options to discard the program’s stdout/stderr or to redirect them to files
-• Environment variables to set before launching the program
-• A working directory to set before launching the program
-• An umask to set before launching the program
+## Goals
 
+- This project is about the recreation of Task management application like supervisord
+- The taskmaster server loads a yaml configuration describing each Task (number of process, expected exit codes, command to execute, environnement variables, etc) and monitor the execution of each Task
+- The taskmaster client provides a command line to interract with the server
+
+
+### Task Description
+
+Yaml configuration :
+
+```
+programs:
+
+  ls:
+    cmd: "/bin/ls -l"
+    numprocs: 3
+    umask: 022
+    workingdir: /taskmaster
+    autostart: true
+    autorestart: unexpected
+    exitcodes:
+    - 0
+    - 2
+    startretries: 0
+    starttime: 0
+    stopsignal: TERM
+    stoptime: 1
+    stdout: /var/logs/ls.stdout
+    stderr: /var/logs/ls.stderr
+    env:
+      STARTED_BY: taskmaster
+      ANSWER: 42
+
+  sleep:
+    cmd: "/bin/sleep 3"
+    numprocs: 1
+    umask: 022
+    workingdir: /taskmaster
+    autostart: false
+    autorestart: unexpected
+    exitcodes:
+    - 0
+    startretries: 3
+    starttime: 10
+    stopsignal: USR1
+    stoptime: 3
+    stdout: /var/logs/sleep.stdout
+    stderr: /var/logs/sleep.stderr
+    env:
+      STARTED_BY: taskmaster
+      ANSWER: 42
+```
+
+
+### Client commands
+
+- `start` <program>
+- `stop` <program>
+- `reload`
+- `status`
+
+### Features
+
+- Task Reload
+- Restart on unexpected exit code
+- Running Time monitoring
 
 
 ### Launch sighup
