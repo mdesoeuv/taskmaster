@@ -12,7 +12,7 @@
 
 Yaml configuration :
 
-```
+```yaml
 programs:
 
   ls:
