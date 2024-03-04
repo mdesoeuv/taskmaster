@@ -88,7 +88,10 @@ async def send_user_commands(writer, should_run: dict):
                     should_run['waiting_for_response'] = True
                     writer.write(command.encode())
                     await writer.drain()
-
+                    if command == "exit":
+                        logger.info("Exiting...")
+                        should_run['connection_active'] = False
+                        break
                     loading_task = asyncio.create_task(display_loading(should_run))
                     await loading_task
     except EOFError as e:
