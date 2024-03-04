@@ -1,0 +1,58 @@
+programs:
+
+  ls_current_dir:
+    cmd: "/bin/ls -l"
+    numprocs: 3
+    umask: 022
+    workingdir: .
+    autostart: true
+    autorestart: unexpected
+    exitcodes:
+    - 0
+    startretries: 3
+    starttime: 0
+    stopsignal: TERM
+    stoptime: 1
+    stdout: ./logs/ls_current_dir.stdout
+    stderr: ./logs/ls_current_dir.stderr
+    env:
+      STARTED_BY: taskmaster
+      ANSWER: 42
+
+  ls_client_subdir:
+    cmd: "/bin/ls -l"
+    numprocs: 3
+    umask: 022
+    workingdir: ./client
+    autostart: true
+    autorestart: unexpected
+    exitcodes:
+    - 0
+    startretries: 3
+    starttime: 0
+    stopsignal: TERM
+    stoptime: 1
+    stdout: ./logs/ls_client_subdir.stdout
+    stderr: ./logs/ls_client_subdir.stderr
+    env:
+      STARTED_BY: taskmaster
+      ANSWER: 42
+
+  ls_server_subdir:
+    cmd: "/bin/ls -l"
+    numprocs: 3
+    umask: 022
+    workingdir: ./server
+    autostart: true
+    autorestart: unexpected
+    exitcodes:
+    - 0
+    startretries: 3
+    starttime: 0
+    stopsignal: TERM
+    stoptime: 1
+    stdout: ./logs/ls_server_subdir.stdout
+    stderr: ./logs/ls_server_subdir.stderr
+    env:
+      STARTED_BY: taskmaster
+      ANSWER: 42

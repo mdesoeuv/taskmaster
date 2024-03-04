@@ -4,7 +4,7 @@ programs:
     cmd: "/bin/ls -l"
     numprocs: 3
     umask: 022
-    workingdir: /Users/mdesoeuvre/42/taskmaster
+    workingdir: .
     autostart: true
     autorestart: unexpected
     exitcodes:
@@ -14,8 +14,8 @@ programs:
     starttime: 0
     stopsignal: TERM
     stoptime: 1
-    stdout: /Users/mdesoeuvre/42/taskmaster/logs/ls.stdout
-    stderr: /Users/mdesoeuvre/42/taskmaster/logs/ls.stderr
+    stdout: ./logs/ls.stdout
+    stderr: ./logs/ls.stderr
     env:
       STARTED_BY: taskmaster
       ANSWER: 42
@@ -24,7 +24,7 @@ programs:
     cmd: "/bin/sleep 3"
     numprocs: 1
     umask: 022
-    workingdir: /Users/mdesoeuvre/42/taskmaster
+    workingdir: .
     autostart: false
     autorestart: unexpected
     exitcodes:
@@ -33,8 +33,8 @@ programs:
     starttime: 10
     stopsignal: USR1
     stoptime: 3
-    stdout: /Users/mdesoeuvre/42/taskmaster/logs/sleep.stdout
-    stderr: /Users/mdesoeuvre/42/taskmaster/logs/sleep.stderr
+    stdout: ./logs/sleep.stdout
+    stderr: ./logs/sleep.stderr
     env:
       STARTED_BY: taskmaster
       ANSWER: 42
@@ -43,7 +43,7 @@ programs:
     cmd: "/bin/sleep 5"
     numprocs: 2
     umask: 022
-    workingdir: /Users/mdesoeuvre/42/taskmaster
+    workingdir: .
     autostart: false
     autorestart: unexpected
     exitcodes:
@@ -52,8 +52,8 @@ programs:
     starttime: 2
     stopsignal: USR1
     stoptime: 3
-    stdout: /Users/mdesoeuvre/42/taskmaster/logs/sleep.stdout
-    stderr: /Users/mdesoeuvre/42/taskmaster/logs/sleep.stderr
+    stdout: ./logs/sleep.stdout
+    stderr: ./logs/sleep.stderr
     env:
       STARTED_BY: taskmaster
       ANSWER: 42
@@ -62,7 +62,7 @@ programs:
     cmd: "/bin/env"
     numprocs: 3
     umask: 022
-    workingdir: /Users/mdesoeuvre/42/taskmaster
+    workingdir: .
     autostart: false
     autorestart: unexpected
     exitcodes:
@@ -72,8 +72,8 @@ programs:
     starttime: 0
     stopsignal: TERM
     stoptime: 1
-    stdout: /Users/mdesoeuvre/42/taskmaster/logs/env.stdout
-    stderr: /Users/mdesoeuvre/42/taskmaster/logs/env.stderr
+    stdout: ./logs/env.stdout
+    stderr: ./logs/env.stderr
     env:
       STARTED_BY: taskmaster
       ANSWER: 42
