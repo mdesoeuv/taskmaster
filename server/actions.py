@@ -12,9 +12,7 @@ from config_parser import (
 from exceptions import ProcessException
 from taskmaster import TaskMaster
 
-logger = logging.getLogger("taskmaster: " + __name__)
-logging.basicConfig()
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 def find_process_in_list(program_name: str, program_list: list[Program]):

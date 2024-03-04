@@ -3,8 +3,8 @@ import logging
 from arg_parser import parse_server_port
 from aioconsole import ainput, aprint
 
+logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 
 def is_command_valid(input_command: str) -> bool:

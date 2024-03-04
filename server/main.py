@@ -12,9 +12,21 @@ from command_handler import handle_command
 from actions import exit_action, launch_programs
 from taskmaster import TaskMaster
 
-logger = logging.getLogger("taskmaster")
-logging.basicConfig()
-logger.setLevel(logging.DEBUG)
+
+try:
+    logger = logging.getLogger()
+    logging.basicConfig()
+    logger.setLevel(logging.DEBUG)
+    fh = logging.FileHandler("./logs/taskmaster.log")
+    fh.setLevel(logging.DEBUG)
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+except Exception as e:
+    logging.error(f"Logger configuration error: {e}")
+    exit(1)
 
 
 async def launch_taskmaster(taskmaster: TaskMaster):

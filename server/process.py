@@ -6,9 +6,7 @@ from enums import AutoRestart, Status, Signal
 from datetime import datetime
 from definitions import ProgramDefinition
 
-logger = logging.getLogger("taskmaster: " + __name__)
-logging.basicConfig()
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 @dataclass

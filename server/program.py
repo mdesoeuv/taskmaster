@@ -7,9 +7,7 @@ from process import Process
 from definitions import ProgramDefinition
 from enums import Status
 
-logger = logging.getLogger("taskmaster: " + __name__)
-logging.basicConfig()
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 def compare_programs(
@@ -207,7 +205,6 @@ class Program(ProgramDefinition):
         return "Program updated"
 
     def get_status(self) -> str:
-        print("Getting status")
         return_string = ""
         for process_id in range(self.numprocs):
             if self.processes.get(process_id):
