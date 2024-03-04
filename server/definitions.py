@@ -21,3 +21,4 @@ class ProgramDefinition(YamlDataClassConfig):
     stdout: str = "/dev/null"
     stderr: str = "/dev/null"
     env: dict = None
+    mail_alerting: bool = False

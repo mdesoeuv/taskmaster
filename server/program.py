@@ -39,7 +39,7 @@ def critical_attribute(attributes: List[str]) -> bool:
 
 @dataclass
 class Program(ProgramDefinition):
-    processes: Dict[int, "Process"] = field(default_factory=dict)
+    processes: Dict[int, Process] = field(default_factory=dict)
     state: Status = Status.STOPPED
 
     def __init__(self, program_definition: ProgramDefinition):
@@ -79,6 +79,7 @@ class Program(ProgramDefinition):
                         stoptime=self.stoptime,
                         autorestart=self.autorestart,
                         startretries=self.startretries,
+                        mail_alerting=self.mail_alerting,
                     )
                     logger.debug(f"Starting process {self.name}-{process_id}")
                     asyncio.create_task(self.processes[process_id].start())
@@ -91,7 +92,7 @@ class Program(ProgramDefinition):
                     f"Task {self.name}: {process_id + 1}/{self.numprocs} started"
                 )
         except Exception as e:
-            logger.error(f"Error starting Program: {e}")
+            logger.debug(f"Error starting Program: {e}")
             errors += 1
             return f"Error starting Program {self.name}: {self.numprocs - errors}/{self.numprocs} started successfully"
         if processes_already_started == self.numprocs:
@@ -116,7 +117,7 @@ class Program(ProgramDefinition):
                 await self.processes[process_id].stop()
 
         except Exception as e:
-            logger.error(f"Error stopping process: {e}")
+            logger.debug(f"Error stopping process: {e}")
             return f"Error stopping task {self.name}: {e}"
         logger.info(f"Task {self.name} stopped successfully")
         return f"Task {self.name} stopped successfully"

@@ -3,7 +3,7 @@ class TaskException(Exception):
         super().__init__(message)
 
 
-class TaskDefinitionError(TaskException):
+class ProgramDefinitionError(TaskException):
     def __init__(self, message):
         super().__init__(message)
 
