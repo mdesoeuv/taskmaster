@@ -33,7 +33,7 @@ async def display_loading(should_run: dict, timeout=5):
         await asyncio.sleep(0.1)
         counter += 1
         if counter % 10 == 0:
-            await aprint("Loading...")
+            await aprint("loading...")
     if should_run['waiting_for_response']:
         await aprint("No response from server. Please check your connection.")
     should_run['waiting_for_response'] = False
@@ -52,8 +52,6 @@ async def listen_from_server(reader, should_run: dict):
                 await aprint(message, end='')
     except Exception as e:
         logger.error(f"Error while listening for server messages: {e}")
-    finally:
-        should_run['connection_active'] = False
 
 
 async def monitor_state(should_run: dict):
@@ -88,41 +86,49 @@ async def send_user_commands(writer, should_run: dict):
 
                     loading_task = asyncio.create_task(display_loading(should_run))
                     await loading_task
-
-    except asyncio.CancelledError:
-        logger.info("Command input cancelled.")
+    except Exception as e:
+        logger.error(f"Error while sending user commands: {e}")
+    finally:
+        writer.close()
+        await writer.wait_closed()
 
 
 async def start_client(host, port):
     should_run = {'connection_active': True, 'waiting_for_response': False}
+    reader, writer = None, None
+
     try:
         reader, writer = await asyncio.open_connection(host, port)
-
         logger.info("Connected to the server. Type 'quit' to exit.")
 
         listener_task = asyncio.create_task(listen_from_server(reader, should_run))
         user_input_task = asyncio.create_task(send_user_commands(writer, should_run))
-        
+
         await asyncio.gather(listener_task, user_input_task)
 
     except ConnectionRefusedError:
         logger.error("Server is not running. Please start the server and try again.")
     except KeyboardInterrupt:
-        logger.info("Client interrupted. Closing connection...")
+        logger.info("Client interrupted by user. Closing connection...")
         should_run['connection_active'] = False
-        if not writer.is_closing():
+        if writer is not None:
             writer.close()
             await writer.wait_closed()
-        logger.info("Connection closed.")
     except Exception as e:
         logger.error(f"An error occurred: {e}")
     finally:
-        if not writer.is_closing():
+        if writer is not None:
             writer.close()
             await writer.wait_closed()
+
 
 if __name__ == "__main__":
     HOST = "127.0.0.1"
     PORT = parse_server_port()
 
-    asyncio.run(start_client(HOST, PORT))
+    try:
+        asyncio.run(start_client(HOST, PORT))
+    except KeyboardInterrupt:
+        logger.info("Client interrupted by user. Closing connection...")
+    except Exception as e:
+        logger.error(f"An error occurred: {e}")
