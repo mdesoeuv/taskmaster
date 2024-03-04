@@ -144,15 +144,8 @@ programs:
 ### Send a SIGHUP signal to the server
 
 ```shell
-(.venv) ➜  taskmaster git:(feat/sighup) ✗ ps -a
-  PID TTY           TIME CMD
-89039 ttys005    0:00.95 /usr/local/bin/zsh -il
-90895 ttys005    0:00.13 /usr/local/Cellar/python@3.11/3.11.6_1/Frameworks/Python.framework/Versions/3.11/Resources/Python.a
-89210 ttys011    0:00.73 /usr/local/bin/zsh
-90947 ttys015    0:00.71 /usr/local/bin/zsh -il
-91446 ttys015    0:00.01 ps -a
-(.venv) ➜  taskmaster git:(feat/sighup) ✗ kill -HUP 90895
-(.venv) ➜  taskmaster git:(feat/sighup) ✗ 
+ps -a
+kill -HUP <server_pid>
 ```
 
 
