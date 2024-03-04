@@ -8,6 +8,32 @@
 - The taskmaster client provides a command line to interract with the server
 
 
+## Usage
+
+### Installation
+
+
+#### Virtual Environment Setup
+
+```shell
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+### Server
+
+```shell
+python  server/main.py -c <path_to_config_file> -p <server_port>
+```
+
+### Client
+
+```shell
+python client/main.py -p <server_port>
+```
+
+
 ### Task Description
 
 Yaml configuration :
@@ -55,23 +81,69 @@ programs:
       ANSWER: 42
 ```
 
+#### Program parameters
+
+- `cmd` : Command to execute
+- `numprocs` : Number of process to start
+- `umask` : Umask to apply to the process
+- `workingdir` : Working directory for the process
+- `autostart` : Start the process at the launch of the server
+- `autorestart` : 
+  - `unexpected` : Restart the process if it exits with an unexpected exit code
+  - `true` : Restart the process if it exits
+  - `false` : Never restart the process
+- `exitcodes` : List of expected exit codes
+- `startretries` : Number of retries before considering the program as `ABORTED`
+- `starttime` : Time to wait before considering the program as `RUNNING`
+- `stopsignal` : Signal to send to the process to stop it
+- `stoptime` : Time to wait after sending the stop signal before killing the process
+- `stdout` : Path to the stdout log file
+- `stderr` : Path to the stderr log file
+- `env` : Environment variables to set for the process
+
 
 ### Client commands
 
 - `start` <program>
 - `stop` <program>
+- `restart` <program>
 - `reload`
 - `status`
+- `exit`
 
 ### Features
 
-- Task Reload
+#### Mandatory
+
+- Multiple process management
+- Start / Stop / Restart
 - Restart on unexpected exit code
+- Status
 - Running Time monitoring
+- Task Reload (SIGHUP + reload command)
+- Umask
+- Working directory
+- Retries
+- Exit codes
+- Autostart
+- Autorestart
+- Environment variables
+- Log file management
+- Stop signal
+- Stop time
 
 
-### Launch sighup
+#### Bonus
 
+- Client / Server architecture
+- Mail alerting
+- Advanced Logging (levels + file)
+
+
+
+### Send a SIGHUP signal to the server
+
+```shell
 (.venv) ➜  taskmaster git:(feat/sighup) ✗ ps -a
   PID TTY           TIME CMD
 89039 ttys005    0:00.95 /usr/local/bin/zsh -il
@@ -81,6 +153,7 @@ programs:
 91446 ttys015    0:00.01 ps -a
 (.venv) ➜  taskmaster git:(feat/sighup) ✗ kill -HUP 90895
 (.venv) ➜  taskmaster git:(feat/sighup) ✗ 
+```
 
 
 ### Mail Alerting
