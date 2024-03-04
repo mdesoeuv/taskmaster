@@ -136,7 +136,7 @@ programs:
 #### Bonus
 
 - Client / Server architecture
-- Mail alerting
+- Mail alerting on Aborted / Unexpected exit
 - Advanced Logging (levels + file)
 
 
@@ -158,6 +158,10 @@ programs:
 
 ### Mail Alerting
 
+The server can send mail alerts on the following events :
+- Program Aborted
+- Unexpected exit
+
 #### Mail configuration with gmail address using SSL
 
 - SMTP Sever : smtp.gmail.com
@@ -165,9 +169,11 @@ programs:
 - Username : Sender mail address
 - Password : Gmail requires an App Password to be created (16 characters) in order to send mails from an application
 - Dests : Comma-separated list of mail addresses
-- 
+
 
 #### App Password Creation
+
+Using a gmail account, you need to create an App Password in order to send mail from an application  
 
 1) App password creation is under the 2-Step Verification menu (https://myaccount.google.com/signinoptions/two-step-verification)
 2) At the bottom of the page there is an `App Passwords` submenu (https://myaccount.google.com/apppasswords)
