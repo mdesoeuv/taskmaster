@@ -92,7 +92,7 @@ class Program(ProgramDefinition):
                     f"Task {self.name}: {process_id + 1}/{self.numprocs} started"
                 )
         except Exception as e:
-            logger.error(f"Error starting Program: {e}")
+            logger.debug(f"Error starting Program: {e}")
             errors += 1
             return f"Error starting Program {self.name}: {self.numprocs - errors}/{self.numprocs} started successfully"
         if processes_already_started == self.numprocs:
@@ -117,7 +117,7 @@ class Program(ProgramDefinition):
                 await self.processes[process_id].stop()
 
         except Exception as e:
-            logger.error(f"Error stopping process: {e}")
+            logger.debug(f"Error stopping process: {e}")
             return f"Error stopping task {self.name}: {e}"
         logger.info(f"Task {self.name} stopped successfully")
         return f"Task {self.name} stopped successfully"

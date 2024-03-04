@@ -66,7 +66,7 @@ class Process:
         except Exception as e:
             self.stopped_at = datetime.now()
             self.status = Status.FATAL
-            logger.error(f"Error starting process {self.name}: {e}")
+            logger.debug(f"Error starting process {self.name}: {e}")
             self.retry()
             return f"Error starting process {self.name}: {e}"
         return f"Process {self.name} started successfully."
@@ -75,15 +75,15 @@ class Process:
         # Wait for the process to finish asynchronously
         self.returncode = await self.process.wait()
         self.stopped_at = datetime.now()
-        logger.debug(f"Process {self.name} exited with code {self.returncode}")
         if self.returncode not in self.exitcodes:
-            logger.error(
+            logger.info(
                 f"Process {self.name} exited with unexpected code {self.returncode}"
             )
             self.status = Status.FATAL
             if self.autorestart == AutoRestart.unexpected:
                 self.retry()
         else:
+            logger.info(f"Process {self.name} exited with code {self.returncode}")
             self.status = Status.EXITED
             if self.autorestart == AutoRestart.always:
                 self.retry()
@@ -94,11 +94,13 @@ class Process:
             if self.returncode not in self.exitcodes:
                 self.status = Status.ABORTED
                 if self.mail_alerting:
-                    asyncio.create_task(email_alert(
-                        f"Process {self.name} aborted",
-                        f"Process {self.name} aborted after max retries ({self.retries})"
-                        )
-                    )
+                    try:
+                        email_alert(
+                            f"Process {self.name} ABORTED",
+                            f"Process: {self.name} aborted after max retries: {self.retries}"
+                            )
+                    except Exception as e:
+                        logger.debug(f"Error sending email alert: {e}")
                 log_string += f" after unexpected exit code ({self.returncode}): ABORTED."
             logger.info(log_string)
             return
@@ -132,7 +134,7 @@ class Process:
 
     def kill(self):
         self.autorestart = AutoRestart.never
-        print(f"Killing process {self.name}: {self.process}")
+        logger.debug(f"Killing process {self.name}: {self.process}")
         if self.process:
             try:
                 self.process.kill()
@@ -161,7 +163,7 @@ class Process:
         await asyncio.sleep(self.starttime)
         if self.returncode is None:
             self.status = Status.RUNNING
-            logger.debug(
+            logger.info(
                 f"Process {self.name}, pid {self.process.pid}, RUNNING"
             )
 

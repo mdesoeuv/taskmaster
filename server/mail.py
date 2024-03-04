@@ -22,11 +22,11 @@ def email_alert(subject: str, body: str):
     msg["from"] = user
     msg["to"] = dests
 
-    logging.debug(f"Sending email to {dests}")
+    logger.debug(f"Sending email to {dests}")
     with smtplib.SMTP_SSL(host, port) as smtp_server:
         smtp_server.login(user, password)
         smtp_server.sendmail(user, dests, msg.as_string())
-        logging.debug("Email sent successfully")
+        logger.debug("Email sent successfully")
 
 
 if __name__ == "__main__":
