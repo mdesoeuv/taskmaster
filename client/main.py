@@ -106,7 +106,7 @@ async def start_client(host, port):
 
     try:
         reader, writer = await asyncio.open_connection(host, port)
-        logger.info("Connected to the server. Type 'quit' to exit.")
+        logger.info("Connected to the server. Type 'exit' to exit.")
 
         listener_task = asyncio.create_task(listen_from_server(reader, should_run))
         user_input_task = asyncio.create_task(send_user_commands(writer, should_run))

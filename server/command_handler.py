@@ -1,7 +1,7 @@
 from actions import (
     show_status,
     reload_config_file,
-    exit_action,
+    shutdown,
 )
 import logging
 
@@ -44,9 +44,7 @@ async def handle_command(command: str, taskmaster: TaskMaster) -> str:
         case "reload":
             return await reload_config_file(taskmaster)
         case "exit":
-            return await exit_action(
-                taskmaster.programs
-            )  # Assuming exit_action is synchronous. If not, add await.
+            return await shutdown(taskmaster)
         case _:
             logger.info(
                 f"Unknown command: `{action}` (Available commands: "

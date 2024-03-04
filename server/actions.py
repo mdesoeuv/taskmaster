@@ -106,3 +106,23 @@ async def launch_programs(
                 f"Error creating process {program_name}: {e}"
             )
     return programs
+
+
+async def shutdown(taskmaster: TaskMaster):
+    print("\nShutting down server...")
+
+    # Close all active client connections and prevent
+    connections = list(taskmaster.active_connections.keys())
+    shutdown_message = "server_shutdown"
+    for addr in connections:
+        writer = taskmaster.active_connections[addr]
+        if writer:
+            writer.write(shutdown_message.encode())
+            await writer.drain()  # Assurez-vous que le message est envoyé.
+            writer.close()
+            await writer.wait_closed()
+
+    taskmaster.server.close()
+    await taskmaster.server.wait_closed()
+    print("Server is closed")
+    await exit_action(taskmaster.programs)

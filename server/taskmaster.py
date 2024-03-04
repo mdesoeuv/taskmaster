@@ -14,6 +14,7 @@ class TaskMaster(YamlDataClassConfig):
         default_factory=dict
     )
     programs: Dict[str, Program] = field(default_factory=dict)
+    server: asyncio.Server = None
     active_connections: Dict[str, asyncio.StreamWriter] = field(
         default_factory=dict
     )
