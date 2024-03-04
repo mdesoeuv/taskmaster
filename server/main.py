@@ -9,7 +9,7 @@ from config_parser import (
 )
 from functools import partial
 from command_handler import handle_command
-from actions import exit_action, launch_programs
+from actions import exit_action, launch_programs, reload_config_file
 from taskmaster import TaskMaster
 
 
@@ -109,6 +109,11 @@ async def main():
             getattr(signal, signame),
             lambda: asyncio.create_task(shutdown(server, taskmaster)),
         )
+
+    loop.add_signal_handler(
+        signal.SIGHUP,
+        lambda: asyncio.create_task(reload_config_file(taskmaster)),
+    )
 
     async with server:
         try:
