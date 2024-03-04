@@ -11,7 +11,9 @@ from functools import partial
 from command_handler import handle_command
 from actions import launch_programs, reload_config_file, shutdown
 from taskmaster import TaskMaster
-
+import os
+import pwd
+import grp
 
 try:
     logger = logging.getLogger()
@@ -69,16 +71,36 @@ async def handle_client(
 async def main():
     loop = asyncio.get_running_loop()
 
+    if os.geteuid() != 0:
+        print("This script needs to be run as root.")
+        return
+
     args = parse_arguments()
     port: int = args.server_port
     config_file = pathlib.Path(args.configuration_file_path)
     taskmaster: TaskMaster = TaskMaster(config_file=config_file)
+
+    # Perform necessary root operations here (e.g., binding to ports below 1024)
+
+    # Drop root privileges after necessary root operations are done
+    # Define non-root user and group, e.g., 'nobody'
+    # Change process GID and UID to drop root privileges
+    try:
+        # Set the effective user and group IDs to 'nobody' or another low-privileged user
+        nobody_uid = pwd.getpwnam("nobody").pw_uid
+        nobody_gid = grp.getgrnam("nobody").gr_gid
+        os.setgid(nobody_gid)
+        os.setuid(nobody_uid)
+    except OSError as e:
+        print(f"Unable to change user and group ID: {e}")
+        return
 
     taskmaster.server = await asyncio.start_server(
         partial(handle_client, taskmaster=taskmaster),
         "127.0.0.1",
         port,
     )
+
     addr = taskmaster.server.sockets[0].getsockname()
     print(f"Server listening on {addr}")
 
