@@ -3,7 +3,7 @@ programs:
   ls_current_dir:
     cmd: "/bin/ls -l"
     numprocs: 3
-    umask: 022
+    umask: "022"
     workingdir: .
     autostart: true
     autorestart: unexpected
@@ -22,7 +22,7 @@ programs:
   ls_client_subdir:
     cmd: "/bin/ls -l"
     numprocs: 3
-    umask: 022
+    umask: "022"
     workingdir: ./client
     autostart: true
     autorestart: unexpected
@@ -41,7 +41,7 @@ programs:
   ls_server_subdir:
     cmd: "/bin/ls -l"
     numprocs: 3
-    umask: 022
+    umask: "022"
     workingdir: ./server
     autostart: true
     autorestart: unexpected

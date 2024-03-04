@@ -3,7 +3,7 @@ programs:
   ls_never:
     cmd: "/bin/ls -l"
     numprocs: 1
-    umask: 022
+    umask: "022"
     workingdir: .
     autostart: true
     autorestart: never
@@ -22,7 +22,7 @@ programs:
   ls_unexpected:
     cmd: "/bin/ls -l"
     numprocs: 1
-    umask: 022
+    umask: "022"
     workingdir: .
     autostart: true
     autorestart: unexpected
@@ -41,7 +41,7 @@ programs:
   ls_always:
     cmd: "/bin/ls -l"
     numprocs: 1
-    umask: 022
+    umask: "022"
     workingdir: .
     autostart: true
     autorestart: always

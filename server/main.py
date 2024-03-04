@@ -17,7 +17,7 @@ try:
     logger = logging.getLogger()
     logging.basicConfig()
     logger.setLevel(logging.DEBUG)
-    fh = logging.FileHandler("../logs/taskmaster.log")
+    fh = logging.FileHandler("./logs/taskmaster.log")
     fh.setLevel(logging.DEBUG)
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
