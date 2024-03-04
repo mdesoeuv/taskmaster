@@ -28,6 +28,10 @@ async def handle_client(
     writer: asyncio.StreamWriter,
     taskmaster: TaskMaster,
 ):
+    addr = writer.get_extra_info("peername")
+    print(f"Client {addr} connected")
+    taskmaster.active_connections[addr] = writer
+
     print("Client connected")
     try:
         while True:
@@ -38,19 +42,35 @@ async def handle_client(
             print(f"Received: {message}")
             response = await handle_command(message, taskmaster)
             if response:
+                print(f"Sending: {response}")
                 writer.write(response.encode())
                 await writer.drain()
     except Exception as e:
         print(f"An error occurred: {e}")
     finally:
-        print("Client disconnected")
+        print(f"Client {addr} disconnected")
         writer.close()
         await writer.wait_closed()
+        taskmaster.active_connections.pop(addr)
 
 
 async def shutdown(server: asyncio.Server, taskmaster: TaskMaster):
+    print("\nShutting down server...")
+
+    # Close all active client connections and prevent
+    connections = list(taskmaster.active_connections.keys())
+    shutdown_message = "server_shutdown"
+    for addr in connections:
+        writer = taskmaster.active_connections[addr]
+        if writer:
+            writer.write(shutdown_message.encode())
+            await writer.drain()  # Assurez-vous que le message est envoyé.
+            writer.close()
+            await writer.wait_closed()
+
     server.close()
     await server.wait_closed()
+    print("Server is closed")
     await exit_action(taskmaster.programs)
 
 

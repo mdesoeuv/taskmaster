@@ -4,6 +4,7 @@ from definitions import ProgramDefinition
 from program import Program
 from typing import Dict
 import pathlib
+import asyncio
 
 
 @dataclass
@@ -13,3 +14,6 @@ class TaskMaster(YamlDataClassConfig):
         default_factory=dict
     )
     programs: Dict[str, Program] = field(default_factory=dict)
+    active_connections: Dict[str, asyncio.StreamWriter] = field(
+        default_factory=dict
+    )
