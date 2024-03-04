@@ -8,8 +8,8 @@ from enums import AutoRestart, Signal
 class ProgramDefinition(YamlDataClassConfig):
     name: str
     cmd: str
+    umask: int
     numprocs: int = 1
-    umask: str = "022"
     cwd: str = "/tmp"
     autostart: bool = True
     autorestart: AutoRestart = AutoRestart.unexpected

@@ -15,7 +15,7 @@ class Process:
     cmd: str
     cwd: str
     env: dict
-    umask: str
+    umask: int
     stdout: str
     stderr: str
     autorestart: AutoRestart
@@ -43,6 +43,7 @@ class Process:
                 *self.cmd.split(),
                 cwd=self.cwd,
                 env=self.env,
+                umask=self.umask,
                 stdout=(
                     asyncio.subprocess.PIPE
                     if self.stdout == "PIPE"
