@@ -83,14 +83,14 @@ async def main():
     # Perform necessary root operations here (e.g., binding to ports below 1024)
 
     # Drop root privileges after necessary root operations are done
-    # Define non-root user and group, e.g., 'nobody'
+    # Define non-root user and group, e.g., 'taskmaster'
     # Change process GID and UID to drop root privileges
     try:
-        # Set the effective user and group IDs to 'nobody' or another low-privileged user
-        nobody_uid = pwd.getpwnam("nobody").pw_uid
-        nobody_gid = grp.getgrnam("nobody").gr_gid
-        os.setgid(nobody_gid)
-        os.setuid(nobody_uid)
+        # Set the effective user and group IDs to 'taskmaster' or another low-privileged user
+        taskmaster_uid = pwd.getpwnam("taskmaster").pw_uid
+        taskmaster_gid = grp.getgrnam("taskmaster").gr_gid
+        os.setgid(taskmaster_gid)
+        os.setuid(taskmaster_uid)
     except OSError as e:
         print(f"Unable to change user and group ID: {e}")
         return
