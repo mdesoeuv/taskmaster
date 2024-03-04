@@ -65,8 +65,9 @@ class Process:
         except Exception as e:
             self.stopped_at = datetime.now()
             self.status = Status.FATAL
-            logger.error(f"Error in start process function: {e}")
+            logger.error(f"Error starting process {self.name}: {e}")
             self.retry()
+            return f"Error starting process {self.name}: {e}"
         return f"Process {self.name} started successfully."
 
     async def monitor_process(self):
@@ -87,11 +88,16 @@ class Process:
                 self.retry()
 
     def retry(self):
-        if (
-            self.autorestart == AutoRestart.false
-            or self.retries >= self.startretries
-        ):
-            logger.error(f"AutoRestart set to False or Max retries reached for process {self.name}")
+        if self.retries >= self.startretries:
+            logger.info(f"Max retries reached for process {self.name}")
+            if self.returncode not in self.exitcodes:
+                self.status = Status.ABORTED
+                logger.error(
+                    f"Max retries reached for process {self.name} after unexpected exit codes: Aborted."
+                )
+            return
+        if self.autorestart == AutoRestart.false:
+            logger.error(f"AutoRestart set to False for process {self.name}")
             return
         self.retries += 1
         logger.info(
@@ -136,6 +142,8 @@ class Process:
         self.retries = 0
 
     def get_uptime(self) -> int:
+        if not self.started_at:
+            return 0
         difference = (
             self.stopped_at - self.started_at
             if self.stopped_at

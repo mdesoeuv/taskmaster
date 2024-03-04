@@ -29,6 +29,7 @@ class Status(str, Enum):
     EXITED = "EXITED"
     FATAL = "FATAL"
     STOPPING = "STOPPING"
+    ABORTED = "ABORTED"
 
     def __str__(self):
         return self.value

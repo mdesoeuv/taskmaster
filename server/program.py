@@ -90,13 +90,13 @@ class Program(ProgramDefinition):
                         f"Error starting process {self.name}-{process_id}: {e}"
                     )
                 logger.debug(
-                    f"Task {self.name}: {process_id + 1}/{self.numprocs} started successfully"
+                    f"Task {self.name}: {process_id + 1}/{self.numprocs} started"
                 )
         except Exception as e:
             logger.error(f"Error starting Program: {e}")
             errors += 1
             return f"Error starting Program {self.name}: {self.numprocs - errors}/{self.numprocs} started successfully"
-        logger.debug(f"Task {self.name} started successfully")
+        logger.debug(f"Task {self.name} started")
         if processes_already_started == self.numprocs:
             return f"Task {self.name} is already running"
         return f"Task {self.name}: {self.numprocs - errors}/{self.numprocs} started successfully, {processes_already_started} already running, {errors} failed"
@@ -208,15 +208,15 @@ class Program(ProgramDefinition):
         print("Getting status")
         return_string = ""
         for process_id in range(self.numprocs):
-            if (
-                self.processes.get(process_id)
-                and self.processes[process_id].process
-            ):
-                pid = self.processes[process_id].process.pid
+            if self.processes.get(process_id):
                 status = self.processes[process_id].status
                 returncode = self.processes[process_id].returncode
                 uptime = self.processes[process_id].get_uptime()
-                return_string += f"{self.name}-{process_id}: {status} ({returncode}), pid {pid}, uptime {uptime}\n"
+                if self.processes[process_id].process:
+                    pid = self.processes[process_id].process.pid
+                    return_string += f"{self.name}-{process_id}: {status} ({returncode}), pid {pid}, uptime {uptime}\n"
+                else:
+                    return_string += f"{self.name}-{process_id}: {status} ({returncode}), uptime {uptime}\n"
             else:
                 return_string += f"{self.name}-{process_id}: STOPPED\n"
         return return_string
