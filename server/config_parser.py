@@ -13,9 +13,7 @@ try:
 except ImportError:
     from yaml import Loader
 
-logger = logging.getLogger("taskmaster: " + __name__)
-logging.basicConfig()
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 def config_file_parser(path: pathlib.Path) -> Dict:

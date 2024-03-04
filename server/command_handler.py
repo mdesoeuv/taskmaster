@@ -7,9 +7,7 @@ import logging
 
 from taskmaster import TaskMaster
 
-logger = logging.getLogger("taskmaster: " + __name__)
-logging.basicConfig()
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 async def handle_command(command: str, taskmaster: TaskMaster) -> str:

@@ -2,9 +2,7 @@ import logging
 from enum import Enum
 import signal
 
-logger = logging.getLogger("taskmaster: " + __name__)
-logging.basicConfig()
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 SIGNAL_MAP = {
     "TERM": signal.SIGTERM,
