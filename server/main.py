@@ -42,6 +42,7 @@ async def handle_client(
             print(f"Received: {message}")
             response = await handle_command(message, taskmaster)
             if response:
+                print(f"Sending: {response}")
                 writer.write(response.encode())
                 await writer.drain()
     except Exception as e:
