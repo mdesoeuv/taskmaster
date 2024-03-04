@@ -2,10 +2,16 @@ import asyncio
 import logging
 from arg_parser import parse_server_port
 from aioconsole import ainput, aprint
+from prompt_toolkit import PromptSession
+from prompt_toolkit.history import InMemoryHistory
+from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
+from prompt_toolkit.completion import WordCompleter
 
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO)
 
+valid_commands = ['exit', 'reload', 'status', 'command']
+command_completer = WordCompleter(valid_commands, ignore_case=True)
 
 def is_command_valid(input_command: str) -> bool:
     command = input_command.split()
@@ -59,46 +65,37 @@ async def monitor_state(should_run: dict):
         await asyncio.sleep(0.1)
 
 
+
 async def send_user_commands(writer, should_run: dict):
+    session = PromptSession(history=InMemoryHistory(), auto_suggest=AutoSuggestFromHistory(), completer=command_completer)
+
     try:
         while should_run['connection_active']:
-            user_input_task = asyncio.create_task(ainput("> "))
-            monitor_task = asyncio.create_task(monitor_state(should_run))
-
-            done, pending = await asyncio.wait(
-                [user_input_task, monitor_task],
-                return_when=asyncio.FIRST_COMPLETED
-            )
-
-            for task in pending:
-                task.cancel()
-
-            if not should_run['connection_active']:
-                logger.info("\nExiting due to server shutdown.")
+            try:
+                command = await session.prompt_async("> ")
+            except (EOFError, KeyboardInterrupt):
+                logger.info("Exiting due to user interruption or EOF.")
+                should_run['connection_active'] = False
                 break
 
-            if user_input_task in done:
-                command = user_input_task.result()
-                if command == '':
-                    logger.info("EOF received. Closing connection...")
+            if not command.strip():
+                logger.info("Empty command received. Please enter a valid command.")
+                continue
+
+            if is_command_valid(command):
+                should_run['waiting_for_response'] = True
+                writer.write(command.encode())
+                await writer.drain()
+
+                if command == "exit":
+                    logger.info("Exiting...")
                     should_run['connection_active'] = False
                     break
 
-                if is_command_valid(command):
-                    should_run['waiting_for_response'] = True
-                    writer.write(command.encode())
-                    await writer.drain()
-                    if command == "exit":
-                        logger.info("Exiting...")
-                        should_run['connection_active'] = False
-                        break
-                    loading_task = asyncio.create_task(display_loading(should_run))
-                    await loading_task
-    except EOFError as e:
-        logger.info("EOF received. Closing connection...")
-        should_run['connection_active'] = False
+                loading_task = asyncio.create_task(display_loading(should_run))
+                await loading_task
     except Exception as e:
-        logger.error(f"Error while sending user commands: {e.__class__.__name__}: {e}")
+        logger.error(f"Error while sending user commands: {e}")
     finally:
         writer.close()
         await writer.wait_closed()
