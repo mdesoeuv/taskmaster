@@ -37,5 +37,5 @@ class Status(str, Enum):
 
 class AutoRestart(str, Enum):
     unexpected = "unexpected"
-    true = "true"
-    false = "false"
+    always = "always"
+    never = "never"

@@ -84,20 +84,19 @@ class Process:
                 self.retry()
         else:
             self.status = Status.EXITED
-            if self.autorestart == AutoRestart.true:
+            if self.autorestart == AutoRestart.always:
                 self.retry()
 
     def retry(self):
         if self.retries >= self.startretries:
-            logger.info(f"Max retries reached for process {self.name}")
+            log_string = f"Max retries reached for process: {self.name}"
             if self.returncode not in self.exitcodes:
                 self.status = Status.ABORTED
-                logger.error(
-                    f"Max retries reached for process {self.name} after unexpected exit codes: Aborted."
-                )
+                log_string += f" after unexpected exit code ({self.returncode}): ABORTED."
+            logger.info(log_string)
             return
-        if self.autorestart == AutoRestart.false:
-            logger.error(f"AutoRestart set to False for process {self.name}")
+        if self.autorestart == AutoRestart.never:
+            logger.debug(f"AutoRestart set to 'never' for process {self.name}")
             return
         self.retries += 1
         logger.info(
@@ -125,7 +124,7 @@ class Process:
             logger.info(f"Process {self.name} is already stopped")
 
     def kill(self):
-        self.autorestart = AutoRestart.false
+        self.autorestart = AutoRestart.never
         print(f"Killing process {self.name}: {self.process}")
         if self.process:
             try:

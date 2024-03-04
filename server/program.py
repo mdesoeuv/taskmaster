@@ -96,10 +96,12 @@ class Program(ProgramDefinition):
             logger.error(f"Error starting Program: {e}")
             errors += 1
             return f"Error starting Program {self.name}: {self.numprocs - errors}/{self.numprocs} started successfully"
-        logger.debug(f"Task {self.name} started")
         if processes_already_started == self.numprocs:
+            logger.info(f"Task {self.name} is already running")
             return f"Task {self.name} is already running"
-        return f"Task {self.name}: {self.numprocs - errors}/{self.numprocs} started successfully, {processes_already_started} already running, {errors} failed"
+        log_string = f"Task {self.name}: {self.numprocs - errors}/{self.numprocs} started successfully, {processes_already_started} already running, {errors} failed"
+        logger.info(log_string)
+        return log_string
 
     async def stop(self):
         self.state = Status.STOPPED

@@ -1,0 +1,58 @@
+programs:
+
+  ls_never:
+    cmd: "/bin/ls -l"
+    numprocs: 1
+    umask: 022
+    workingdir: .
+    autostart: true
+    autorestart: never
+    exitcodes:
+    - 0
+    startretries: 3
+    starttime: 0
+    stopsignal: TERM
+    stoptime: 1
+    stdout: ./logs/ls_never.stdout
+    stderr: ./logs/ls_never.stderr
+    env:
+      STARTED_BY: taskmaster
+      ANSWER: 42
+
+  ls_unexpected:
+    cmd: "/bin/ls -l"
+    numprocs: 1
+    umask: 022
+    workingdir: .
+    autostart: true
+    autorestart: unexpected
+    exitcodes:
+    - 2
+    startretries: 3
+    starttime: 0
+    stopsignal: TERM
+    stoptime: 1
+    stdout: ./logs/ls_unexpected.stdout
+    stderr: ./logs/ls_unexpected.stderr
+    env:
+      STARTED_BY: taskmaster
+      ANSWER: 42
+
+  ls_always:
+    cmd: "/bin/ls -l"
+    numprocs: 1
+    umask: 022
+    workingdir: .
+    autostart: true
+    autorestart: always
+    exitcodes:
+    - 0
+    startretries: 5
+    starttime: 0
+    stopsignal: TERM
+    stoptime: 1
+    stdout: ./logs/ls_always.stdout
+    stderr: ./logs/ls_always.stderr
+    env:
+      STARTED_BY: taskmaster
+      ANSWER: 42
