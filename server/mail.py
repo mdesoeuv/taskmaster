@@ -8,7 +8,7 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 
-def email_alert(subject: str, body: str, to: str):
+def email_alert(subject: str, body: str):
 
     user = os.getenv("EMAIL_USERNAME")
     password = os.getenv("EMAIL_PASSWORD")

@@ -5,6 +5,7 @@ from typing import List
 from enums import AutoRestart, Status, Signal
 from datetime import datetime
 from definitions import ProgramDefinition
+from mail import email_alert
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,7 @@ class Process:
     retries: int = 0
     started_at: int = 0
     stopped_at: int = 0
+    mail_alerting: bool = False
 
     async def start(self):
         try:
@@ -91,6 +93,12 @@ class Process:
             log_string = f"Max retries reached for process: {self.name}"
             if self.returncode not in self.exitcodes:
                 self.status = Status.ABORTED
+                if self.mail_alerting:
+                    asyncio.create_task(email_alert(
+                        f"Process {self.name} aborted",
+                        f"Process {self.name} aborted after max retries ({self.retries})"
+                        )
+                    )
                 log_string += f" after unexpected exit code ({self.returncode}): ABORTED."
             logger.info(log_string)
             return

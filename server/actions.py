@@ -5,7 +5,7 @@ from definitions import ProgramDefinition
 from dataclasses import dataclass
 from config_parser import (
     config_file_parser,
-    TaskDefinitionError,
+    ProgramDefinitionError,
     ConfigError,
     define_programs,
 )
@@ -78,7 +78,7 @@ async def reload_config_file(taskmaster: TaskMaster) -> str:
         taskmaster.programs_definition = new_programs_definition
 
         logger.info("Config file reloaded successfully")
-    except (TaskDefinitionError, ConfigError) as e:
+    except (ProgramDefinitionError, ConfigError) as e:
         print(f"Error reloading config file: {e}")
         return f"Error reloading config file: {e}"
     return "Reloaded config file successfully"

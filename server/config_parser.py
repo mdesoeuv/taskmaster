@@ -5,7 +5,7 @@ import pathlib
 from exceptions import ConfigError
 from typing import Dict
 from enums import Signal, AutoRestart
-from exceptions import TaskDefinitionError
+from exceptions import ProgramDefinitionError
 from definitions import ProgramDefinition
 
 try:
@@ -61,16 +61,17 @@ async def define_programs(
                 stdout=prog.get("stdout"),
                 stderr=prog.get("stderr"),
                 env=format_env(prog.get("env", {})),
+                mail_alerting=prog.get("mail_alerting"),
             )
         except Exception as e:
             logger.error("Error while parsing task definition.")
-            raise TaskDefinitionError(
+            raise ProgramDefinitionError(
                 "Error while parsing task definition. "
                 "Check the configuration file: " + str(e)
             )
         programs_definition[program_name] = program
         if len(programs_definition) == 0:
-            raise TaskDefinitionError(
+            raise ProgramDefinitionError(
                 "No program defined in the configuration file."
             )
     return programs_definition
