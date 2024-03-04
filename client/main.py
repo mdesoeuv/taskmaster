@@ -42,6 +42,7 @@ def send_command(address: Tuple[str, int]) -> None:
                     response = s.recv(1024)
                     print(response.decode())
             except EOFError:
+                print("\nexiting...")
                 break  # Allows graceful exit with Ctrl+D
             except KeyboardInterrupt:
                 print("\nexiting...")
