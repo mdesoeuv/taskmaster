@@ -74,7 +74,7 @@ async def send_user_commands(writer, should_run: dict):
                 task.cancel()
 
             if not should_run['connection_active']:
-                logger.info("\nExiting due to server shutdown or command termination.")
+                logger.info("\nExiting due to server shutdown.")
                 break
 
             if user_input_task in done:
