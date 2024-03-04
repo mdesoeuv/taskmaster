@@ -19,6 +19,25 @@ programs:
       STARTED_BY: taskmaster
       ANSWER: 42
 
+  umask_dir_022:
+    cmd: "mkdir -p ./logs/umask_dir_022"
+    numprocs: 1
+    umask: "022"
+    workingdir: .
+    autostart: true§
+    autorestart: never
+    exitcodes:
+    - 0
+    startretries: 0
+    starttime: 0
+    stopsignal: TERM
+    stoptime: 1
+    stdout: ./logs/umask_dir_022.stdout
+    stderr: ./logs/umask_dir_022.stderr
+    env:
+      STARTED_BY: taskmaster
+      ANSWER: 42
+
   umask_027:
     cmd: "touch ./logs/umask_027"
     numprocs: 1

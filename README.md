@@ -149,6 +149,14 @@ kill -HUP <server_pid>
 ```
 
 
+### Umask Explanation
+
+The umask is a 3-digit octal number that represents the file-creation mode mask. The mask determines the file permission for newly created files. The default umask value is 022  
+The umask value is subtracted from the maximum permissions -> 666 for a file or 777 for a directory  
+For example, a umask of 022 sets the file permissions to 644, which corresponds to `-rw-r--r--` or 755 for a directory, which corresponds to `drwxr-xr-x`  
+The value parsed in the configuration file is the octal representation of the umask string    
+
+
 ### Mail Alerting
 
 The server can send mail alerts on the following events :
