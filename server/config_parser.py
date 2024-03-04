@@ -49,7 +49,7 @@ async def define_programs(
                 name=program_name,
                 cmd=prog.get("cmd"),
                 numprocs=prog.get("numprocs"),
-                umask=prog.get("umask"),
+                umask=int(prog.get("umask", "022"), 8),
                 cwd=prog.get("workingdir"),
                 autostart=prog.get("autostart"),
                 autorestart=AutoRestart(str(prog.get("autorestart")).lower()),
