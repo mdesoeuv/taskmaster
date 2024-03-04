@@ -3,7 +3,7 @@
 
 ## Goals
 
-- This project is about the recreation of Task management application like supervisord
+- This project is about the recreation of Task management application like supervisor (i.e. supervisorctl/supervisord for the client/server architecture)
 - The taskmaster server loads a yaml configuration describing each Task (number of process, expected exit codes, command to execute, environnement variables, etc) and monitor the execution of each Task
 - The taskmaster client provides a command line to interract with the server
 
