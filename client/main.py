@@ -66,7 +66,7 @@ async def send_user_commands(writer, should_run: dict):
             monitor_task = asyncio.create_task(monitor_state(should_run))
 
             done, pending = await asyncio.wait(
-                [user_input_task, monitor_task], 
+                [user_input_task, monitor_task],
                 return_when=asyncio.FIRST_COMPLETED
             )
 
@@ -74,11 +74,16 @@ async def send_user_commands(writer, should_run: dict):
                 task.cancel()
 
             if not should_run['connection_active']:
-                logger.info("\nExiting due to server shutdown.")
+                logger.info("\nExiting due to server shutdown or command termination.")
                 break
 
             if user_input_task in done:
                 command = user_input_task.result()
+                if command == '':
+                    logger.info("EOF received. Closing connection...")
+                    should_run['connection_active'] = False
+                    break
+
                 if is_command_valid(command):
                     should_run['waiting_for_response'] = True
                     writer.write(command.encode())
@@ -86,12 +91,14 @@ async def send_user_commands(writer, should_run: dict):
 
                     loading_task = asyncio.create_task(display_loading(should_run))
                     await loading_task
+    except EOFError as e:
+        logger.info("EOF received. Closing connection...")
+        should_run['connection_active'] = False
     except Exception as e:
-        logger.error(f"Error while sending user commands: {e}")
+        logger.error(f"Error while sending user commands: {e.__class__.__name__}: {e}")
     finally:
         writer.close()
         await writer.wait_closed()
-
 
 async def start_client(host, port):
     should_run = {'connection_active': True, 'waiting_for_response': False}
