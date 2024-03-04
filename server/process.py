@@ -65,7 +65,7 @@ class Process:
         except Exception as e:
             self.stopped_at = datetime.now()
             self.status = Status.FATAL
-            logger.error(f"Error in start process function: {e}")
+            logger.error(f"Error starting process {self.name}: {e}")
             self.retry()
             return f"Error starting process {self.name}: {e}"
         return f"Process {self.name} started successfully."

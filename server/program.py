@@ -203,7 +203,6 @@ class Program(ProgramDefinition):
         if self.autostart or old_state == Status.RUNNING:
             self.start()
         return "Program updated"
-    
 
     def get_status(self) -> str:
         print("Getting status")
