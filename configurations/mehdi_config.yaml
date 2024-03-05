@@ -3,7 +3,7 @@ programs:
   ls:
     cmd: "/bin/ls -l"
     numprocs: 3
-    umask: 022
+    umask: "022"
     workingdir: .
     autostart: true
     autorestart: unexpected
@@ -23,7 +23,7 @@ programs:
   sleep:
     cmd: "/bin/sleep 3"
     numprocs: 1
-    umask: 022
+    umask: "022"
     workingdir: .
     autostart: false
     autorestart: unexpected
@@ -42,7 +42,7 @@ programs:
   sleep3:
     cmd: "/bin/sleep 5"
     numprocs: 2
-    umask: 022
+    umask: "022"
     workingdir: .
     autostart: false
     autorestart: unexpected
@@ -61,7 +61,7 @@ programs:
   env:
     cmd: "/bin/env"
     numprocs: 3
-    umask: 022
+    umask: "022"
     workingdir: .
     autostart: false
     autorestart: unexpected
@@ -81,7 +81,7 @@ programs:
   nginx:
     cmd: "/usr/local/bin/nginx -c /etc/nginx/test.conf"
     numprocs: 1
-    umask: 022
+    umask: "022"
     workingdir: /tmp
     autostart: true
     autorestart: unexpected

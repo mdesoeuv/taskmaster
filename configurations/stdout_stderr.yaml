@@ -1,0 +1,123 @@
+programs:
+
+  echo_stdout:
+    cmd: "echo hello world"
+    numprocs: 1
+    workingdir: .
+    autostart: true
+    autorestart: unexpected
+    exitcodes:
+    - 0
+    startretries: 3
+    starttime: 0
+    stopsignal: TERM
+    stoptime: 1
+    stdout: ./logs/echo_stdout.stdout
+    stderr: ./logs/echo_stdout.stderr
+    env:
+      STARTED_BY: taskmaster
+      ANSWER: 42
+  
+  ls_stderr:
+    cmd: "ls -l /nonexistent"
+    numprocs: 1
+    umask: "022"
+    workingdir: .
+    autostart: true
+    autorestart: never
+    exitcodes:
+    - 0
+    startretries: 1
+    starttime: 0
+    stopsignal: TERM
+    stoptime: 1
+    stdout: ./logs/ls_stderr.stdout
+    stderr: ./logs/ls_stderr.stderr
+    env:
+      STARTED_BY: taskmaster
+      ANSWER: 42
+
+  echo_stdout_pipe:
+    cmd: "echo hello world"
+    numprocs: 1
+    umask: "022"
+    workingdir: .
+    autostart: true
+    autorestart: unexpected
+    exitcodes:
+    - 0
+    startretries: 3
+    starttime: 0
+    stopsignal: TERM
+    stoptime: 1
+    stdout: PIPE
+    stderr: ./logs/echo_stdout_pipe.stderr
+    env:
+      STARTED_BY: taskmaster
+      ANSWER: 42
+
+  ls_stderr_pipe:
+    cmd: "ls -l /nonexistent"
+    numprocs: 1
+    umask: "022"
+    workingdir: .
+    autostart: true
+    autorestart: never
+    exitcodes:
+    - 0
+    startretries: 1
+    starttime: 0
+    stopsignal: TERM
+    stoptime: 1
+    stdout: ./logs/ls_stderr_pipe.stdout
+    stderr: PIPE
+    env:
+      STARTED_BY: taskmaster
+      ANSWER: 42
+  
+  echo_no_stdout:
+    cmd: "echo hello world"
+    numprocs: 1
+    umask: "022"
+    workingdir: .
+    autostart: true
+    autorestart: unexpected
+    exitcodes:
+    - 0
+    startretries: 3
+    starttime: 0
+    stopsignal: TERM
+    stoptime: 1
+    env:
+      STARTED_BY: taskmaster
+      ANSWER: 42
+
+  ls_no_stderr:
+    cmd: "ls -l /nonexistent"
+    numprocs: 1
+    umask: "022"
+    workingdir: .
+    autostart: true
+    autorestart: never
+    exitcodes:
+    - 0
+    startretries: 1
+    starttime: 0
+    stopsignal: TERM
+    stoptime: 1
+
+  ping_stdout:
+    cmd: "ping www.google.com"
+    numprocs: 1
+    umask: "022"
+    workingdir: .
+    autostart: true
+    autorestart: never
+    exitcodes:
+    - 0
+    startretries: 0
+    starttime: 0
+    stopsignal: INT
+    stoptime: 3
+    stdout: PIPE
+    stderr: PIPE

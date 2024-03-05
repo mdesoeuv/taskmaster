@@ -16,16 +16,19 @@ import pwd
 import grp
 
 try:
-    logger = logging.getLogger()
-    logging.basicConfig()
-    logger.setLevel(logging.DEBUG)
-    fh = logging.FileHandler("../logs/taskmaster.log")
-    fh.setLevel(logging.DEBUG)
-    formatter = logging.Formatter(
+    root_logger = logging.getLogger()
+    logger = logging.getLogger("main")
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(levelname)-8s: %(name)-8s: %(message)-8s"
+    )
+    file_handler = logging.FileHandler("./logs/taskmaster.log")
+    file_handler.setLevel(logging.DEBUG)
+    file_formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
-    fh.setFormatter(formatter)
-    logger.addHandler(fh)
+    file_handler.setFormatter(file_formatter)
+    root_logger.addHandler(file_handler)
 except Exception as e:
     logging.error(f"Logger configuration error: {e}")
     exit(1)
@@ -43,26 +46,28 @@ async def handle_client(
     taskmaster: TaskMaster,
 ):
     addr = writer.get_extra_info("peername")
-    print(f"Client {addr} connected")
+    logger.info(f"Client {addr} connected")
     taskmaster.active_connections[addr] = writer
 
-    print("Client connected")
     try:
         while True:
             data = await reader.read(100)
             if not data:
                 break
             message = data.decode()
-            print(f"Received: {message}")
-            response = await handle_command(message, taskmaster)
+            logger.debug(f"Received: {message}")
+            response = await handle_command(message, taskmaster, root_logger)
             if response:
-                print(f"Sending: {response}")
+                logger.debug(f"Sending: {response}")
+                # if response does not end with \n, add it
+                if not response.endswith("\n"):
+                    response = response + "\n"
                 writer.write(response.encode())
                 await writer.drain()
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logger.error(f"An error occurred: {e}")
     finally:
-        print(f"Client {addr} disconnected")
+        logger.info(f"Client {addr} disconnected")
         writer.close()
         await writer.wait_closed()
         taskmaster.active_connections.pop(addr)
@@ -102,7 +107,7 @@ async def main():
     )
 
     addr = taskmaster.server.sockets[0].getsockname()
-    print(f"Server listening on {addr}")
+    logger.info(f"Server listening on {addr}")
 
     taskmaster_task = asyncio.create_task(launch_taskmaster(taskmaster))
 
@@ -123,8 +128,7 @@ async def main():
                 taskmaster.server.serve_forever(), taskmaster_task
             )
         except asyncio.CancelledError:
-            # This exception is expected during shutdown, so you can ignore it
-            logger.info("Server tasks cancelled as part of shutdown process.")
+            logger.info("Server task cancelled as part of shutdown process. Shutdown successfully.")
         except Exception as e:
             logger.error(f"Unexpected error: {e}")
 
@@ -132,4 +136,4 @@ async def main():
 try:
     asyncio.run(main())
 except KeyboardInterrupt:
-    print("Server stopped manually")
+    logger.info("Server stopped manually")

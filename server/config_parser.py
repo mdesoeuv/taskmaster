@@ -5,7 +5,7 @@ import pathlib
 from exceptions import ConfigError
 from typing import Dict
 from enums import Signal, AutoRestart
-from exceptions import TaskDefinitionError
+from exceptions import ProgramDefinitionError
 from definitions import ProgramDefinition
 
 try:
@@ -39,7 +39,7 @@ def format_env(env: dict) -> dict:
 async def define_programs(
     config: dict,
 ) -> Dict[str, ProgramDefinition]:
-    print("define_programs")
+    logger.debug("defining programs...")
     programs_definition: Dict[str, ProgramDefinition] = {}
     program_list = config["programs"].keys()
     for program_name in program_list:
@@ -49,7 +49,7 @@ async def define_programs(
                 name=program_name,
                 cmd=prog.get("cmd"),
                 numprocs=prog.get("numprocs"),
-                umask=prog.get("umask"),
+                umask=int(prog.get("umask", "022"), 8),
                 cwd=prog.get("workingdir"),
                 autostart=prog.get("autostart"),
                 autorestart=AutoRestart(str(prog.get("autorestart")).lower()),
@@ -58,19 +58,20 @@ async def define_programs(
                 starttime=prog.get("starttime"),
                 stopsignal=Signal(prog.get("stopsignal", "TERM")).signal,
                 stoptime=prog.get("stoptime"),
-                stdout=prog.get("stdout"),
-                stderr=prog.get("stderr"),
+                stdout=prog.get("stdout", "/dev/null"),
+                stderr=prog.get("stderr", "/dev/null"),
                 env=format_env(prog.get("env", {})),
+                mail_alerting=prog.get("mail_alerting"),
             )
         except Exception as e:
             logger.error("Error while parsing task definition.")
-            raise TaskDefinitionError(
+            raise ProgramDefinitionError(
                 "Error while parsing task definition. "
                 "Check the configuration file: " + str(e)
             )
         programs_definition[program_name] = program
         if len(programs_definition) == 0:
-            raise TaskDefinitionError(
+            raise ProgramDefinitionError(
                 "No program defined in the configuration file."
             )
     return programs_definition

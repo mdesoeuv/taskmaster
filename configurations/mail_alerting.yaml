@@ -1,25 +1,6 @@
-programs:
+programs: 
 
-  ls_never:
-    cmd: "/bin/ls -l"
-    numprocs: 1
-    umask: "022"
-    workingdir: .
-    autostart: true
-    autorestart: never
-    exitcodes:
-    - 0
-    startretries: 3
-    starttime: 0
-    stopsignal: TERM
-    stoptime: 1
-    stdout: ./logs/ls_never.stdout
-    stderr: ./logs/ls_never.stderr
-    env:
-      STARTED_BY: taskmaster
-      ANSWER: 42
-
-  ls_unexpected:
+  ls_abort:
     cmd: "/bin/ls -l"
     numprocs: 1
     umask: "022"
@@ -27,32 +8,54 @@ programs:
     autostart: true
     autorestart: unexpected
     exitcodes:
-    - 2
-    startretries: 3
+    - 1
+    startretries: 2
     starttime: 0
     stopsignal: TERM
     stoptime: 1
-    stdout: ./logs/ls_unexpected.stdout
-    stderr: ./logs/ls_unexpected.stderr
+    stdout: ./logs/ls_abort.stdout
+    stderr: ./logs/ls_abort.stderr
     env:
       STARTED_BY: taskmaster
       ANSWER: 42
+    mail_alerting: true
 
-  ls_always:
+  ls_abort_no_email:
     cmd: "/bin/ls -l"
     numprocs: 1
     umask: "022"
     workingdir: .
     autostart: true
-    autorestart: always
+    autorestart: unexpected
     exitcodes:
-    - 0
-    startretries: 5
+    - 1
+    startretries: 2
     starttime: 0
     stopsignal: TERM
     stoptime: 1
-    stdout: ./logs/ls_always.stdout
-    stderr: ./logs/ls_always.stderr
+    stdout: ./logs/ls_abort_no_email.stdout
+    stderr: ./logs/ls_abort_no_email.stderr
     env:
       STARTED_BY: taskmaster
       ANSWER: 42
+    mail_alerting: false
+
+  ls_ok:
+    cmd: "/bin/ls -l"
+    numprocs: 1
+    umask: "022"
+    workingdir: .
+    autostart: true
+    autorestart: unexpected
+    exitcodes:
+    - 0
+    startretries: 2
+    starttime: 0
+    stopsignal: TERM
+    stoptime: 1
+    stdout: ./logs/ls_ok.stdout
+    stderr: ./logs/ls_ok.stderr
+    env:
+      STARTED_BY: taskmaster
+      ANSWER: 42
+    mail_alerting: true

@@ -5,6 +5,7 @@ from typing import List
 from enums import AutoRestart, Status, Signal
 from datetime import datetime
 from definitions import ProgramDefinition
+from mail import email_alert
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +16,7 @@ class Process:
     cmd: str
     cwd: str
     env: dict
-    umask: str
+    umask: int
     stdout: str
     stderr: str
     autorestart: AutoRestart
@@ -32,6 +33,9 @@ class Process:
     retries: int = 0
     started_at: int = 0
     stopped_at: int = 0
+    mail_alerting: bool = False
+    stdout_reader_task: asyncio.Task = None
+    stderr_reader_task: asyncio.Task = None
 
     async def start(self):
         try:
@@ -43,6 +47,7 @@ class Process:
                 *self.cmd.split(),
                 cwd=self.cwd,
                 env=self.env,
+                umask=self.umask,
                 stdout=(
                     asyncio.subprocess.PIPE
                     if self.stdout == "PIPE"
@@ -58,12 +63,24 @@ class Process:
             logger.debug(
                 f"Process {self.name}, pid {self.process.pid}, STARTING"
             )
+            if self.stdout == "PIPE":
+                # Start reading stdout asynchronously
+                logger.debug(f"Reading stdout for process {self.name}")
+                self.stdout_reader_task = asyncio.create_task(
+                    self.read_stdout()
+                )
+            if self.stderr == "PIPE":
+                # Start reading stderr asynchronously
+                logger.debug(f"Reading stderr for process {self.name}")
+                self.stderr_reader_task = asyncio.create_task(
+                    self.read_stderr()
+                )
             asyncio.create_task(self.watch_successfull_start())
             await self.monitor_process()
         except Exception as e:
             self.stopped_at = datetime.now()
             self.status = Status.FATAL
-            logger.error(f"Error starting process {self.name}: {e}")
+            logger.debug(f"Error starting process {self.name}: {e}")
             self.retry()
             return f"Error starting process {self.name}: {e}"
         return f"Process {self.name} started successfully."
@@ -72,15 +89,18 @@ class Process:
         # Wait for the process to finish asynchronously
         self.returncode = await self.process.wait()
         self.stopped_at = datetime.now()
-        logger.debug(f"Process {self.name} exited with code {self.returncode}")
+
         if self.returncode not in self.exitcodes:
-            logger.error(
+            logger.info(
                 f"Process {self.name} exited with unexpected code {self.returncode}"
             )
             self.status = Status.FATAL
             if self.autorestart == AutoRestart.unexpected:
                 self.retry()
         else:
+            logger.info(
+                f"Process {self.name} exited with code {self.returncode}"
+            )
             self.status = Status.EXITED
             if self.autorestart == AutoRestart.always:
                 self.retry()
@@ -90,6 +110,14 @@ class Process:
             log_string = f"Max retries reached for process: {self.name}"
             if self.returncode not in self.exitcodes:
                 self.status = Status.ABORTED
+                if self.mail_alerting:
+                    try:
+                        email_alert(
+                            f"Process {self.name} ABORTED",
+                            f"Process: {self.name} aborted after max retries: {self.retries}",
+                        )
+                    except Exception as e:
+                        logger.debug(f"Error sending email alert: {e}")
                 log_string += f" after unexpected exit code ({self.returncode}): ABORTED."
             logger.info(log_string)
             return
@@ -116,6 +144,10 @@ class Process:
                 logger.info(f"Process {self.name} stopped")
                 self.stopped_at = datetime.now()
                 self.status = Status.STOPPED
+                if self.stdout_reader_task:
+                    self.stdout_reader_task.cancel()
+                if self.stderr_reader_task:
+                    self.stderr_reader_task.cancel()
             except asyncio.TimeoutError:
                 self.kill()
         else:
@@ -123,7 +155,7 @@ class Process:
 
     def kill(self):
         self.autorestart = AutoRestart.never
-        print(f"Killing process {self.name}: {self.process}")
+        logger.debug(f"Killing process {self.name}: {self.process}")
         if self.process:
             try:
                 self.process.kill()
@@ -152,7 +184,7 @@ class Process:
         await asyncio.sleep(self.starttime)
         if self.returncode is None:
             self.status = Status.RUNNING
-            logger.debug(
+            logger.info(
                 f"Process {self.name}, pid {self.process.pid}, RUNNING"
             )
 
@@ -177,3 +209,19 @@ class Process:
         self.__dict__.update(attributes)
         logger.info(f"Process {self.name} updated")
         return f"Process {self.name} updated successfully"
+
+    async def read_stdout(self):
+        while True:
+            line = await self.process.stdout.readline()
+            if not line:
+                break
+            logger.info(f"[stdout] {self.name}: {line.decode().strip()}")
+        logger.debug(f"Process {self.name} stdout reader stopped")
+
+    async def read_stderr(self):
+        while True:
+            line = await self.process.stderr.readline()
+            if not line:
+                break
+            logger.info(f"[stderr] {self.name}: {line.decode().strip()}")
+        logger.debug(f"Process {self.name} stderr reader stopped")

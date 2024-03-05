@@ -97,8 +97,12 @@ programs:
 - `starttime` : Time to wait before considering the program as `RUNNING`
 - `stopsignal` : Signal to send to the process to stop it
 - `stoptime` : Time to wait after sending the stop signal before killing the process
-- `stdout` : Path to the stdout log file
+- `stdout` : 
+  - `PIPE` : Log stdout to the server
+  - `Path/to/file` : Log stdout to the file
 - `stderr` : Path to the stderr log file
+  - `PIPE` : Log stderr to the server
+  - `Path/to/file` : Log stderr to the file
 - `env` : Environment variables to set for the process
 
 
@@ -109,7 +113,9 @@ programs:
 - `restart` <program>
 - `reload`
 - `status`
-- `exit`
+- `shutdown`
+- `quit`
+
 
 ### Features
 
@@ -147,6 +153,14 @@ programs:
 ps -a
 kill -HUP <server_pid>
 ```
+
+
+### Umask Explanation
+
+The umask is a 3-digit octal number that represents the file-creation mode mask. The mask determines the file permission for newly created files. The default umask value is 022  
+The umask value is subtracted from the maximum permissions -> 666 for a file or 777 for a directory  
+For example, a umask of 022 sets the file permissions to 644, which corresponds to `-rw-r--r--` or 755 for a directory, which corresponds to `drwxr-xr-x`  
+The value parsed in the configuration file is the octal representation of the umask string    
 
 
 ### Mail Alerting
