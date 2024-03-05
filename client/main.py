@@ -87,26 +87,19 @@ async def send_user_commands(writer, should_run: dict):
     try:
 
         while should_run["connection_active"]:
-            try:
-                user_input_task = asyncio.create_task(
-                    session.prompt_async("> ")
-                )
-                monitor_task = asyncio.create_task(monitor_state(should_run))
+            user_input_task = asyncio.create_task(session.prompt_async("> "))
+            monitor_task = asyncio.create_task(monitor_state(should_run))
 
-                done, pending = await asyncio.wait(
-                    [user_input_task, monitor_task],
-                    return_when=asyncio.FIRST_COMPLETED,
-                )
+            done, pending = await asyncio.wait(
+                [user_input_task, monitor_task],
+                return_when=asyncio.FIRST_COMPLETED,
+            )
 
-                for task in pending:
-                    task.cancel()
+            for task in pending:
+                task.cancel()
 
-                if not should_run["connection_active"]:
-                    logger.info("\nExiting due to server shutdown.")
-                    break
-            except (EOFError, KeyboardInterrupt):
-                logger.info("Exiting due to user interruption or EOF.")
-                should_run["connection_active"] = False
+            if not should_run["connection_active"]:
+                logger.info("\nExiting due to server shutdown.")
                 break
 
             if user_input_task in done:
@@ -133,6 +126,9 @@ async def send_user_commands(writer, should_run: dict):
                         display_loading(should_run)
                     )
                     await loading_task
+    except (EOFError, KeyboardInterrupt):
+        logger.info("Exiting due to EOF. (ctrl d)")
+        should_run["connection_active"] = False
     except Exception as e:
         logger.error(f"Error while sending user commands: {e}")
     finally:
@@ -186,4 +182,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         logger.info("Client interrupted by user. Closing connection...")
     except Exception as e:
-        logger.error(f"An error occurred: {e}")
+        logger.error(f"An error occurreddddd: {e}")
