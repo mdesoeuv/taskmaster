@@ -11,14 +11,17 @@ from functools import partial
 from command_handler import handle_command
 from actions import launch_programs, reload_config_file, shutdown
 from taskmaster import TaskMaster
-
+import os
+import pwd
+import grp
+import getpass
 
 try:
     root_logger = logging.getLogger()
     logger = logging.getLogger("main")
     logging.basicConfig(
         level=logging.DEBUG,
-        format="%(levelname)-8s: %(name)-8s: %(message)-8s"
+        format="%(levelname)-8s: %(name)-8s: %(message)-8s",
     )
     file_handler = logging.FileHandler("./logs/taskmaster.log")
     file_handler.setLevel(logging.DEBUG)
@@ -71,7 +74,31 @@ async def handle_client(
         taskmaster.active_connections.pop(addr)
 
 
+def drop_privileges():
+    if os.geteuid() != 0:
+        logger.debug("No need to drop privilege, starting as non-root user")
+        return
+    try:
+        username = os.getenv("USERNAME")
+        pwnam = pwd.getpwnam(username)
+
+        # Remove group privileges
+        os.setgroups([])
+
+        # Try setting the new uid/gid
+        os.setgid(pwnam.pw_gid)
+        os.setuid(pwnam.pw_uid)
+
+        # Ensure a reasonable umask
+        os.umask(0o22)
+        logger.debug(f"Dropped privileges to {username}")
+    except Exception as e:
+        logger.error(f"Error dropping privileges: {e}")
+        exit(1)
+
+
 async def main():
+    drop_privileges()
     loop = asyncio.get_running_loop()
 
     args = parse_arguments()
@@ -84,6 +111,7 @@ async def main():
         "127.0.0.1",
         port,
     )
+
     addr = taskmaster.server.sockets[0].getsockname()
     logger.info(f"Server listening on {addr}")
 
@@ -106,7 +134,9 @@ async def main():
                 taskmaster.server.serve_forever(), taskmaster_task
             )
         except asyncio.CancelledError:
-            logger.info("Server task cancelled as part of shutdown process. Shutdown successfully.")
+            logger.info(
+                "Server task cancelled as part of shutdown process. Shutdown successfully."
+            )
         except Exception as e:
             logger.error(f"Unexpected error: {e}")
 
