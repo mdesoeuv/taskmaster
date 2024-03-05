@@ -56,10 +56,10 @@ async def handle_client(
             logger.debug(f"Received: {message}")
             response = await handle_command(message, taskmaster, root_logger)
             if response:
+                logger.debug(f"Sending: {response}")
                 # if response does not end with \n, add it
                 if not response.endswith("\n"):
                     response = response + "\n"
-                logger.debug(f"Sending: {response}")
                 writer.write(response.encode())
                 await writer.drain()
     except Exception as e:
