@@ -14,7 +14,8 @@ from taskmaster import TaskMaster
 
 
 try:
-    logger = logging.getLogger()
+    root_logger = logging.getLogger()
+    logger = logging.getLogger("main")
     logging.basicConfig(
         level=logging.DEBUG,
         format="%(levelname)-8s: %(name)-8s: %(message)-8s"
@@ -25,7 +26,7 @@ try:
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
     file_handler.setFormatter(file_formatter)
-    logger.addHandler(file_handler)
+    root_logger.addHandler(file_handler)
 except Exception as e:
     logging.error(f"Logger configuration error: {e}")
     exit(1)
