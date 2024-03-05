@@ -211,7 +211,7 @@ class Process:
         return f"Process {self.name} updated successfully"
 
     async def read_stdout(self):
-        stdout_logger = logging.getLogger(f"{self.name}_stdout")
+        stdout_logger = logging.getLogger(f"stdout:{self.name}")
         while True:
             line = await self.process.stdout.readline()
             if not line:
@@ -220,7 +220,7 @@ class Process:
         logger.debug(f"Process {self.name} stdout reader stopped")
 
     async def read_stderr(self):
-        stderr_logger = logging.getLogger(f"{self.name}_stderr")
+        stderr_logger = logging.getLogger(f"stderr:{self.name}")
         while True:
             line = await self.process.stderr.readline()
             if not line:
