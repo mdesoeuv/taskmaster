@@ -113,4 +113,4 @@ async def main():
 try:
     asyncio.run(main())
 except KeyboardInterrupt:
-    print("Server stopped manually")
+    logger.info("Server stopped manually")
