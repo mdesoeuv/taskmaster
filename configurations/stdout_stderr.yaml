@@ -19,7 +19,7 @@ programs:
       ANSWER: 42
   
   ls_stderr:
-    cmd: "echo error 1>&2"
+    cmd: "ls -l /nonexistent"
     numprocs: 1
     umask: "022"
     workingdir: .
