@@ -79,7 +79,7 @@ def drop_privileges():
         logger.debug("No need to drop privilege, starting as non-root user")
         return
     try:
-        username = getpass.getuser()
+        username = os.getenv("USERNAME")
         pwnam = pwd.getpwnam(username)
 
         # Remove group privileges

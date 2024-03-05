@@ -1,0 +1,19 @@
+programs:
+  privilege:
+    cmd: "ls -l"
+    numprocs: 1
+    umask: "022"
+    workingdir: .
+    autostart: true
+    autorestart: never
+    exitcodes:
+    - 0
+    startretries: 1
+    starttime: 0
+    stopsignal: INT
+    stoptime: 1
+    stdout: ./logs/privilege.stdout
+    stderr: ./logs/privilege.stderr
+    env:
+      STARTED_BY: taskmaster
+      ANSWER: 42
