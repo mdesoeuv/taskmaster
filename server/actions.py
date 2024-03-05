@@ -127,3 +127,10 @@ async def shutdown(taskmaster: TaskMaster):
     await taskmaster.server.wait_closed()
     await exit_action(taskmaster.programs)
     logger.info("Server is closed")
+
+
+def list_programs(programs: Dict[str, Program], return_string: str) -> str:
+    logger.debug("Listing programs...")
+    for program in programs.values():
+        return_string += f"{program.name}\n"
+    return return_string

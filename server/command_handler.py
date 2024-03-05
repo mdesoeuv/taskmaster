@@ -2,6 +2,7 @@ from actions import (
     show_status,
     reload_config_file,
     shutdown,
+    list_programs
 )
 import logging
 
@@ -18,7 +19,7 @@ async def handle_command(
     return_string = ""
     if len(command) == 0:
         return ""
-    if len(command) == 1 and command[0] in ["shutdown", "reload", "status"]:
+    if len(command) == 1 and command[0] in ["shutdown", "reload", "status", "list"]:
         action = command[0]
     elif len(command) == 1:
         logger.info(
@@ -60,6 +61,8 @@ async def handle_command(
             return await reload_config_file(taskmaster)
         case "shutdown":
             return await shutdown(taskmaster)
+        case "list":
+            return list_programs(taskmaster.programs, return_string)
         case "loglevel":
             log_level = command[1].upper()
             root_logger.setLevel(getattr(logging, log_level))

@@ -9,8 +9,7 @@ from prompt_toolkit.completion import WordCompleter
 
 logger = logging.getLogger("client")
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(levelname)-8s: %(name)-8s: %(message)-8s"
+    level=logging.INFO, format="%(levelname)-8s: %(name)-8s: %(message)-8s"
 )
 
 valid_commands = [
@@ -22,6 +21,7 @@ valid_commands = [
     "stop",
     "restart",
     "loglevel",
+    "list",
 ]
 command_completer = WordCompleter(valid_commands, ignore_case=True)
 
@@ -33,7 +33,13 @@ def is_command_valid(input_command: str) -> bool:
         case 0:
             return False
         case 1:
-            if command[0] not in ["quit", "shutdown", "reload", "status"]:
+            if command[0] not in [
+                "quit",
+                "shutdown",
+                "reload",
+                "status",
+                "list",
+            ]:
                 logger.info("Not enough arguments. Usage: command [task_name]")
                 return False
             else:
