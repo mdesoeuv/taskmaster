@@ -39,7 +39,7 @@ def format_env(env: dict) -> dict:
 async def define_programs(
     config: dict,
 ) -> Dict[str, ProgramDefinition]:
-    print("define_programs")
+    logger.debug("defining programs...")
     programs_definition: Dict[str, ProgramDefinition] = {}
     program_list = config["programs"].keys()
     for program_name in program_list:

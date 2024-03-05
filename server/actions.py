@@ -23,7 +23,7 @@ def find_process_in_list(program_name: str, program_list: list[Program]):
 
 
 async def exit_action(programs: Dict[str, Program]):
-    logger.info("Exiting all processes...")
+    logger.debug("Exiting all processes...")
     # await asyncio.gather(*[program.stop() for program in programs.values()])
     for program in programs.values():
         program.kill()
@@ -79,13 +79,13 @@ async def reload_config_file(taskmaster: TaskMaster) -> str:
 
         logger.info("Config file reloaded successfully")
     except (ProgramDefinitionError, ConfigError) as e:
-        print(f"Error reloading config file: {e}")
+        logger.info(f"Error reloading config file: {e}")
         return f"Error reloading config file: {e}"
     return "Reloaded config file successfully"
 
 
 def show_status(programs: Dict[str, Program], return_string: str) -> str:
-    print("Showing status...")
+    logger.debug("Showing status...")
     for program in programs.values():
         return_string += f"{program.get_status()}\n"
     return return_string
@@ -109,7 +109,7 @@ async def launch_programs(
 
 
 async def shutdown(taskmaster: TaskMaster):
-    print("\nShutting down server...")
+    logger.info("\nShutting down server...")
 
     # Close all active client connections and prevent
     connections = list(taskmaster.active_connections.keys())
@@ -124,5 +124,5 @@ async def shutdown(taskmaster: TaskMaster):
 
     taskmaster.server.close()
     await taskmaster.server.wait_closed()
-    print("Server is closed")
     await exit_action(taskmaster.programs)
+    logger.info("Server is closed")

@@ -41,29 +41,28 @@ async def handle_client(
     taskmaster: TaskMaster,
 ):
     addr = writer.get_extra_info("peername")
-    print(f"Client {addr} connected")
+    logger.info(f"Client {addr} connected")
     taskmaster.active_connections[addr] = writer
 
-    print("Client connected")
     try:
         while True:
             data = await reader.read(100)
             if not data:
                 break
             message = data.decode()
-            print(f"Received: {message}")
+            logger.debug(f"Received: {message}")
             response = await handle_command(message, taskmaster, logger)
-            # if response does not end with \n, add it
-            if not response.endswith("\n"):
-                response = response + "\n"
             if response:
-                print(f"Sending: {response}")
+                # if response does not end with \n, add it
+                if not response.endswith("\n"):
+                    response = response + "\n"
+                logger.debug(f"Sending: {response}")
                 writer.write(response.encode())
                 await writer.drain()
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logger.error(f"An error occurred: {e}")
     finally:
-        print(f"Client {addr} disconnected")
+        logger.info(f"Client {addr} disconnected")
         writer.close()
         await writer.wait_closed()
         taskmaster.active_connections.pop(addr)
@@ -83,7 +82,7 @@ async def main():
         port,
     )
     addr = taskmaster.server.sockets[0].getsockname()
-    print(f"Server listening on {addr}")
+    logger.info(f"Server listening on {addr}")
 
     taskmaster_task = asyncio.create_task(launch_taskmaster(taskmaster))
 
