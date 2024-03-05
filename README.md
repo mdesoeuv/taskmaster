@@ -97,8 +97,12 @@ programs:
 - `starttime` : Time to wait before considering the program as `RUNNING`
 - `stopsignal` : Signal to send to the process to stop it
 - `stoptime` : Time to wait after sending the stop signal before killing the process
-- `stdout` : Path to the stdout log file
+- `stdout` : 
+  - `PIPE` : Log stdout to the server
+  - `Path/to/file` : Log stdout to the file
 - `stderr` : Path to the stderr log file
+  - `PIPE` : Log stderr to the server
+  - `Path/to/file` : Log stderr to the file
 - `env` : Environment variables to set for the process
 
 
