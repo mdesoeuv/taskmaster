@@ -15,15 +15,17 @@ from taskmaster import TaskMaster
 
 try:
     logger = logging.getLogger()
-    logging.basicConfig()
-    logger.setLevel(logging.DEBUG)
-    fh = logging.FileHandler("./logs/taskmaster.log")
-    fh.setLevel(logging.DEBUG)
-    formatter = logging.Formatter(
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(levelname)-8s: %(name)-8s: %(message)-8s"
+    )
+    file_handler = logging.FileHandler("./logs/taskmaster.log")
+    file_handler.setLevel(logging.DEBUG)
+    file_formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
-    fh.setFormatter(formatter)
-    logger.addHandler(fh)
+    file_handler.setFormatter(file_formatter)
+    logger.addHandler(file_handler)
 except Exception as e:
     logging.error(f"Logger configuration error: {e}")
     exit(1)

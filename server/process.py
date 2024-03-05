@@ -211,19 +211,17 @@ class Process:
         return f"Process {self.name} updated successfully"
 
     async def read_stdout(self):
-        stdout_logger = logging.getLogger(f"stdout:{self.name}")
         while True:
             line = await self.process.stdout.readline()
             if not line:
                 break
-            stdout_logger.info(line.decode().strip())
+            logger.info(f"[stdout] {self.name}: {line.decode().strip()}")
         logger.debug(f"Process {self.name} stdout reader stopped")
 
     async def read_stderr(self):
-        stderr_logger = logging.getLogger(f"stderr:{self.name}")
         while True:
             line = await self.process.stderr.readline()
             if not line:
                 break
-            stderr_logger.info(line.decode().strip())
+            logger.info(f"[stderr] {self.name}: {line.decode().strip()}")
         logger.debug(f"Process {self.name} stderr reader stopped")
