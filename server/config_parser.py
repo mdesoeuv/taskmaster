@@ -58,8 +58,8 @@ async def define_programs(
                 starttime=prog.get("starttime"),
                 stopsignal=Signal(prog.get("stopsignal", "TERM")).signal,
                 stoptime=prog.get("stoptime"),
-                stdout=prog.get("stdout"),
-                stderr=prog.get("stderr"),
+                stdout=prog.get("stdout", "/dev/null"),
+                stderr=prog.get("stderr", "/dev/null"),
                 env=format_env(prog.get("env", {})),
                 mail_alerting=prog.get("mail_alerting"),
             )
