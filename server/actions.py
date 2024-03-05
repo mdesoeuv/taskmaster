@@ -87,6 +87,7 @@ async def reload_config_file(taskmaster: TaskMaster) -> str:
 def show_status(programs: Dict[str, Program], return_string: str) -> str:
     logger.debug("Showing status...")
     for program in programs.values():
+        return_string += f"{program.name}:\n"
         return_string += f"{program.get_status()}\n"
     return return_string
 
