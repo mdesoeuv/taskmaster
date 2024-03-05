@@ -40,7 +40,6 @@ def critical_attribute(attributes: List[str]) -> bool:
 @dataclass
 class Program(ProgramDefinition):
     processes: Dict[int, Process] = field(default_factory=dict)
-    state: Status = Status.STOPPED
 
     def __init__(self, program_definition: ProgramDefinition):
         # Init the ProgramDefinition attributes coming from herited class

@@ -109,7 +109,9 @@ programs:
 - `restart` <program>
 - `reload`
 - `status`
-- `exit`
+- `shutdown`
+- `quit`
+
 
 ### Features
 

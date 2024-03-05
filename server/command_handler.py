@@ -16,7 +16,7 @@ async def handle_command(command: str, taskmaster: TaskMaster) -> str:
     return_string = ""
     if len(command) == 0:
         return ""
-    if len(command) == 1 and command[0] in ["exit", "reload", "status"]:
+    if len(command) == 1 and command[0] in ["shutdown", "reload", "status"]:
         action = command[0]
     elif len(command) == 1:
         logger.info("Not enough arguments. usage: command [task_name]")
@@ -43,7 +43,7 @@ async def handle_command(command: str, taskmaster: TaskMaster) -> str:
             return show_status(taskmaster.programs, return_string)
         case "reload":
             return await reload_config_file(taskmaster)
-        case "exit":
+        case "shutdown":
             return await shutdown(taskmaster)
         case _:
             logger.info(
