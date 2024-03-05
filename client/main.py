@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from arg_parser import parse_server_port
-from aioconsole import ainput, aprint
+from aioconsole import aprint
 from prompt_toolkit import PromptSession
 from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
@@ -18,6 +18,7 @@ valid_commands = [
     "start",
     "stop",
     "restart",
+    "loglevel",
 ]
 command_completer = WordCompleter(valid_commands, ignore_case=True)
 
@@ -62,8 +63,10 @@ async def listen_from_server(reader, should_run: dict):
             data = await reader.readline()
             message = data.decode("utf-8")
             if message:
+                print("message: ", message)
                 should_run["waiting_for_response"] = False
                 if message.strip() == "server_shutdown":
+                    print("yo")
                     should_run["connection_active"] = False
                     break
                 await aprint(message, end="")
@@ -87,34 +90,51 @@ async def send_user_commands(writer, should_run: dict):
 
         while should_run["connection_active"]:
             try:
-                command = await session.prompt_async("> ")
+                user_input_task = asyncio.create_task(
+                    session.prompt_async("> ")
+                )
+                monitor_task = asyncio.create_task(monitor_state(should_run))
+
+                done, pending = await asyncio.wait(
+                    [user_input_task, monitor_task],
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
+
+                for task in pending:
+                    task.cancel()
+
+                if not should_run["connection_active"]:
+                    logger.info("\nExiting due to server shutdown.")
+                    break
             except (EOFError, KeyboardInterrupt):
                 logger.info("Exiting due to user interruption or EOF.")
                 should_run["connection_active"] = False
                 break
 
-            if not command.strip():
-                logger.info(
-                    "Empty command received. Please enter a valid command."
-                )
-                continue
+            if user_input_task in done:
+                command = user_input_task.result()
 
-            if is_command_valid(command):
-                if command == "quit":
-                    logger.info("Shuting down client...")
-                    should_run["connection_active"] = False
-                    break
-                should_run["waiting_for_response"] = True
-                writer.write(command.encode())
-                await writer.drain()
+                if not command.strip():
+                    continue
 
-                if command == "shutdown":
-                    logger.info("Shuting down server and client...")
-                    should_run["connection_active"] = False
-                    break
+                if is_command_valid(command):
+                    if command == "quit":
+                        logger.info("Shuting down client...")
+                        should_run["connection_active"] = False
+                        break
+                    should_run["waiting_for_response"] = True
+                    writer.write(command.encode())
+                    await writer.drain()
 
-                loading_task = asyncio.create_task(display_loading(should_run))
-                await loading_task
+                    if command == "shutdown":
+                        logger.info("Shuting down server and client...")
+                        should_run["connection_active"] = False
+                        break
+
+                    loading_task = asyncio.create_task(
+                        display_loading(should_run)
+                    )
+                    await loading_task
     except Exception as e:
         logger.error(f"Error while sending user commands: {e}")
     finally:
@@ -128,7 +148,9 @@ async def start_client(host, port):
 
     try:
         reader, writer = await asyncio.open_connection(host, port)
-        logger.info("Connected to the server. Type 'exit' to kill server.")
+        logger.info(
+            "Connected to the server. Type 'quit' to quit client or 'shutdown' to kill server."
+        )
 
         listener_task = asyncio.create_task(
             listen_from_server(reader, should_run)
