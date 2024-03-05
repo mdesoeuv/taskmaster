@@ -10,7 +10,9 @@ from taskmaster import TaskMaster
 logger = logging.getLogger(__name__)
 
 
-async def handle_command(command: str, taskmaster: TaskMaster) -> str:
+async def handle_command(
+    command: str, taskmaster: TaskMaster, logger: logging.Logger
+) -> str:
     print(f"Command: {command}")
     command = command.split()
     return_string = ""
@@ -19,11 +21,24 @@ async def handle_command(command: str, taskmaster: TaskMaster) -> str:
     if len(command) == 1 and command[0] in ["shutdown", "reload", "status"]:
         action = command[0]
     elif len(command) == 1:
-        logger.info("Not enough arguments. usage: command [task_name]")
+        logger.info(
+            "Not enough arguments. usage: command [task_name or loglevel]"
+        )
         return "Not enough arguments. usage: command [task_name]"
     elif len(command) > 2:
         logger.info("Too many arguments. usage: command [task_name]")
         return "Too many arguments. usage: command [task_name]"
+    elif command[0] == "loglevel":
+        action = command[0]
+        log_level = command[1].upper()
+        if log_level not in [
+            "DEBUG",
+            "INFO",
+            "WARNING",
+            "ERROR",
+            "CRITICAL",
+        ]:
+            return f"Invalid log level: {command[1].upper()}, valid log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL"
     else:
         action = command[0]
         program_name = command[1]
@@ -45,6 +60,10 @@ async def handle_command(command: str, taskmaster: TaskMaster) -> str:
             return await reload_config_file(taskmaster)
         case "shutdown":
             return await shutdown(taskmaster)
+        case "loglevel":
+            log_level = command[1].upper()
+            logger.setLevel(getattr(logging, log_level))
+            return f"Log level set to {log_level}"
         case _:
             logger.info(
                 f"Unknown command: `{action}` (Available commands: "
