@@ -10,7 +10,7 @@ from prompt_toolkit.completion import WordCompleter
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO)
 
-valid_commands = ['exit', 'reload', 'status', 'command']
+valid_commands = ['exit', 'reload', 'status', 'start', 'stop']
 command_completer = WordCompleter(valid_commands, ignore_case=True)
 
 def is_command_valid(input_command: str) -> bool:
