@@ -59,13 +59,13 @@ async def display_loading(should_run: dict, timeout=5):
 
 async def listen_from_server(reader, should_run: dict):
     try:
-        while not reader.at_eof() and should_run["connection_active"]:
+        while not reader.at_eof() and should_run["active_connection"]:
             data = await reader.readline()
             message = data.decode("utf-8")
             if message:
                 should_run["waiting_for_response"] = False
                 if message.strip() == "server_shutdown":
-                    should_run["connection_active"] = False
+                    should_run["active_connection"] = False
                     break
                 await aprint(message, end="")
     except Exception as e:
@@ -73,8 +73,17 @@ async def listen_from_server(reader, should_run: dict):
 
 
 async def monitor_state(should_run: dict):
-    while should_run["connection_active"]:
+    while should_run["active_connection"]:
         await asyncio.sleep(0.1)
+
+
+async def prompt(session: PromptSession, should_run: dict):
+    try:
+        if should_run["active_connection"] is False:
+            return
+        return await session.prompt_async("> ", handle_sigint=True)
+    except KeyboardInterrupt:
+        logger.info("Exiting client due to keyboard interrupt.")
 
 
 async def send_user_commands(writer, should_run: dict):
@@ -85,25 +94,30 @@ async def send_user_commands(writer, should_run: dict):
     )
 
     try:
+        while should_run["active_connection"]:
+            user_input_task = asyncio.create_task(prompt(session, should_run))
 
-        while should_run["connection_active"]:
-            user_input_task = asyncio.create_task(session.prompt_async("> "))
             monitor_task = asyncio.create_task(monitor_state(should_run))
 
             done, pending = await asyncio.wait(
                 [user_input_task, monitor_task],
                 return_when=asyncio.FIRST_COMPLETED,
             )
-
             for task in pending:
                 task.cancel()
 
-            if not should_run["connection_active"]:
-                logger.info("\nExiting due to server shutdown.")
+            if not should_run["active_connection"]:
+                print("\n")
+                logger.info("Exiting client due to server shutdown.")
                 break
 
             if user_input_task in done:
                 command = user_input_task.result()
+
+                # ctrl c handling
+                if command is None:
+                    should_run["active_connection"] = False
+                    break
 
                 if not command.strip():
                     continue
@@ -111,7 +125,7 @@ async def send_user_commands(writer, should_run: dict):
                 if is_command_valid(command):
                     if command == "quit":
                         logger.info("Shuting down client...")
-                        should_run["connection_active"] = False
+                        should_run["active_connection"] = False
                         break
                     should_run["waiting_for_response"] = True
                     writer.write(command.encode())
@@ -119,7 +133,7 @@ async def send_user_commands(writer, should_run: dict):
 
                     if command == "shutdown":
                         logger.info("Shuting down server and client...")
-                        should_run["connection_active"] = False
+                        should_run["active_connection"] = False
                         break
 
                     loading_task = asyncio.create_task(
@@ -128,7 +142,7 @@ async def send_user_commands(writer, should_run: dict):
                     await loading_task
     except (EOFError, KeyboardInterrupt):
         logger.info("Exiting due to EOF. (ctrl d)")
-        should_run["connection_active"] = False
+        should_run["active_connection"] = False
     except Exception as e:
         logger.error(f"Error while sending user commands: {e}")
     finally:
@@ -137,7 +151,7 @@ async def send_user_commands(writer, should_run: dict):
 
 
 async def start_client(host, port):
-    should_run = {"connection_active": True, "waiting_for_response": False}
+    should_run = {"active_connection": True, "waiting_for_response": False}
     reader, writer = None, None
 
     try:
@@ -161,7 +175,7 @@ async def start_client(host, port):
         )
     except KeyboardInterrupt:
         logger.info("Client interrupted by user. Closing connection...")
-        should_run["connection_active"] = False
+        should_run["active_connection"] = False
         if writer is not None:
             writer.close()
             await writer.wait_closed()
