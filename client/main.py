@@ -63,10 +63,8 @@ async def listen_from_server(reader, should_run: dict):
             data = await reader.readline()
             message = data.decode("utf-8")
             if message:
-                print("message: ", message)
                 should_run["waiting_for_response"] = False
                 if message.strip() == "server_shutdown":
-                    print("yo")
                     should_run["connection_active"] = False
                     break
                 await aprint(message, end="")
