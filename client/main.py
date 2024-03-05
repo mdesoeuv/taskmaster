@@ -107,7 +107,7 @@ async def send_user_commands(writer, should_run: dict):
                 task.cancel()
 
             if not should_run["active_connection"]:
-                print("\n")
+                logger.info("\n")
                 logger.info("Exiting client due to server shutdown.")
                 break
 

@@ -54,7 +54,7 @@ async def handle_client(
                 break
             message = data.decode()
             logger.debug(f"Received: {message}")
-            response = await handle_command(message, taskmaster, logger)
+            response = await handle_command(message, taskmaster, root_logger)
             if response:
                 # if response does not end with \n, add it
                 if not response.endswith("\n"):

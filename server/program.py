@@ -146,7 +146,6 @@ class Program(ProgramDefinition):
         # if no, update the program attributes
         # finally remove extra processes if numprocs has decreased or add new processes if numprocs has increased
         differences = compare_programs(self, new_program)
-        print("Differences: ", differences)
         if not differences:
             logger.debug(f"No changes for process group {self.name}")
             return "Program unchanged"

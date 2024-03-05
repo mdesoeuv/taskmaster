@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 async def handle_command(
     command: str, taskmaster: TaskMaster, logger: logging.Logger
 ) -> str:
-    print(f"Command: {command}")
+    logger.debug(f"Command: {command}")
     command = command.split()
     return_string = ""
     if len(command) == 0:
@@ -73,5 +73,3 @@ async def handle_command(
                 f"Unknown command: `{action}` (Available commands: "
                 "start, stop, restart, reload, status, exit)"
             )
-
-    return "Command executed successfully"
