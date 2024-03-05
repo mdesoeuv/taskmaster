@@ -53,6 +53,9 @@ async def handle_client(
             message = data.decode()
             print(f"Received: {message}")
             response = await handle_command(message, taskmaster)
+            # if response does not end with \n, add it
+            if not response.endswith("\n"):
+                response = response + "\n"
             if response:
                 print(f"Sending: {response}")
                 writer.write(response.encode())

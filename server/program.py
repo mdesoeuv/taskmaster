@@ -53,51 +53,47 @@ class Program(ProgramDefinition):
         self.state = Status.RUNNING
         errors = 0
         processes_already_started = 0
-        try:
-            for process_id in range(self.numprocs):
-                try:
-                    if self.processes.get(process_id) is not None and (
-                        self.processes[process_id].status == Status.RUNNING
-                        or self.processes[process_id].status == Status.STARTING
-                    ):
-                        logger.info(
-                            f"Process {self.name}-{process_id} is already running"
-                        )
-                        processes_already_started += 1
-                        continue
-                    self.processes[process_id] = Process(
-                        name=f"{self.name}-{process_id}",
-                        cmd=self.cmd,
-                        cwd=self.cwd,
-                        env=self.env,
-                        umask=self.umask,
-                        stdout=self.stdout,
-                        stderr=self.stderr,
-                        exitcodes=self.exitcodes,
-                        stopsignal=self.stopsignal,
-                        starttime=self.starttime,
-                        stoptime=self.stoptime,
-                        autorestart=self.autorestart,
-                        startretries=self.startretries,
-                        mail_alerting=self.mail_alerting,
+        for process_id in range(self.numprocs):
+            try:
+                if self.processes.get(process_id) is not None and (
+                    self.processes[process_id].status == Status.RUNNING
+                    or self.processes[process_id].status == Status.STARTING
+                ):
+                    logger.info(
+                        f"Process {self.name}-{process_id} is already running"
                     )
-                    logger.debug(f"Starting process {self.name}-{process_id}")
-                    asyncio.create_task(self.processes[process_id].start())
-                    logger.debug(f"Process {self.name}-{process_id} started")
-                except Exception as e:
-                    raise ProcessException(
-                        f"Error starting process {self.name}-{process_id}: {e}"
-                    )
-                logger.debug(
-                    f"Task {self.name}: {process_id + 1}/{self.numprocs} started"
+                    processes_already_started += 1
+                    continue
+                self.processes[process_id] = Process(
+                    name=f"{self.name}-{process_id}",
+                    cmd=self.cmd,
+                    cwd=self.cwd,
+                    env=self.env,
+                    umask=self.umask,
+                    stdout=self.stdout,
+                    stderr=self.stderr,
+                    exitcodes=self.exitcodes,
+                    stopsignal=self.stopsignal,
+                    starttime=self.starttime,
+                    stoptime=self.stoptime,
+                    autorestart=self.autorestart,
+                    startretries=self.startretries,
+                    mail_alerting=self.mail_alerting,
                 )
-        except Exception as e:
-            logger.debug(f"Error starting Program: {e}")
-            errors += 1
-            return f"Error starting Program {self.name}: {self.numprocs - errors}/{self.numprocs} started successfully"
+                logger.debug(f"Starting process {self.name}-{process_id}")
+                asyncio.create_task(self.processes[process_id].start())
+                logger.debug(f"Process {self.name}-{process_id} started")
+            except Exception as e:
+                logger.debug(
+                    f"Error starting process {self.name}-{process_id}: {e}"
+                )
+                errors += 1
+            logger.debug(
+                f"Task {self.name}: {process_id + 1}/{self.numprocs} started"
+            )
         if processes_already_started == self.numprocs:
-            logger.info(f"Task {self.name} is already running")
-            return f"Task {self.name} is already running"
+            logger.info(f"Task {self.name} is already started")
+            return f"Task {self.name} is already started"
         log_string = f"Task {self.name}: {self.numprocs - errors}/{self.numprocs} started successfully, {processes_already_started} already running, {errors} failed"
         logger.info(log_string)
         return log_string
