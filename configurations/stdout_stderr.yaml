@@ -106,4 +106,18 @@ programs:
     stopsignal: TERM
     stoptime: 1
 
-  
+  ping_stdout:
+    cmd: "ping www.google.com"
+    numprocs: 1
+    umask: "022"
+    workingdir: .
+    autostart: true
+    autorestart: never
+    exitcodes:
+    - 0
+    startretries: 0
+    starttime: 0
+    stopsignal: INT
+    stoptime: 3
+    stdout: PIPE
+    stderr: PIPE
