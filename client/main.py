@@ -7,8 +7,11 @@ from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.completion import WordCompleter
 
-logger = logging.getLogger()
-logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("client")
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(levelname)-8s: %(name)-8s: %(message)-8s"
+)
 
 valid_commands = [
     "quit",

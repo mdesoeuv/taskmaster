@@ -106,8 +106,7 @@ async def main():
                 taskmaster.server.serve_forever(), taskmaster_task
             )
         except asyncio.CancelledError:
-            # This exception is expected during shutdown, so you can ignore it
-            logger.info("Server tasks cancelled as part of shutdown process.")
+            logger.info("Server task cancelled as part of shutdown process. Shutdown successfully.")
         except Exception as e:
             logger.error(f"Unexpected error: {e}")
 
