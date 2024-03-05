@@ -9,7 +9,7 @@ from prompt_toolkit.completion import WordCompleter
 
 logger = logging.getLogger("client")
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(levelname)-8s: %(name)-8s: %(message)-8s"
 )
 

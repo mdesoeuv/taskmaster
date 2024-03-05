@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 async def handle_command(
-    command: str, taskmaster: TaskMaster, logger: logging.Logger
+    command: str, taskmaster: TaskMaster, root_logger: logging.Logger
 ) -> str:
     logger.debug(f"Command: {command}")
     command = command.split()
@@ -62,7 +62,8 @@ async def handle_command(
             return await shutdown(taskmaster)
         case "loglevel":
             log_level = command[1].upper()
-            logger.setLevel(getattr(logging, log_level))
+            root_logger.setLevel(getattr(logging, log_level))
+            logger.info(f"Log level set to {log_level}")
             return f"Log level set to {log_level}"
         case _:
             logger.info(
