@@ -14,13 +14,14 @@ from taskmaster import TaskMaster
 import os
 import pwd
 import grp
+import getpass
 
 try:
     root_logger = logging.getLogger()
     logger = logging.getLogger("main")
     logging.basicConfig(
         level=logging.DEBUG,
-        format="%(levelname)-8s: %(name)-8s: %(message)-8s"
+        format="%(levelname)-8s: %(name)-8s: %(message)-8s",
     )
     file_handler = logging.FileHandler("./logs/taskmaster.log")
     file_handler.setLevel(logging.DEBUG)
@@ -73,32 +74,37 @@ async def handle_client(
         taskmaster.active_connections.pop(addr)
 
 
-async def main():
-    loop = asyncio.get_running_loop()
-
+def drop_privileges():
     if os.geteuid() != 0:
-        print("This script needs to be run as root.")
+        logger.debug("No need to drop privilege, starting as non-root user")
         return
+    try:
+        username = getpass.getuser()
+        pwnam = pwd.getpwnam(username)
+
+        # Remove group privileges
+        os.setgroups([])
+
+        # Try setting the new uid/gid
+        os.setgid(pwnam.pw_gid)
+        os.setuid(pwnam.pw_uid)
+
+        # Ensure a reasonable umask
+        os.umask(0o22)
+        logger.debug(f"Dropped privileges to {username}")
+    except Exception as e:
+        logger.error(f"Error dropping privileges: {e}")
+        exit(1)
+
+
+async def main():
+    drop_privileges()
+    loop = asyncio.get_running_loop()
 
     args = parse_arguments()
     port: int = args.server_port
     config_file = pathlib.Path(args.configuration_file_path)
     taskmaster: TaskMaster = TaskMaster(config_file=config_file)
-
-    # Perform necessary root operations here (e.g., binding to ports below 1024)
-
-    # Drop root privileges after necessary root operations are done
-    # Define non-root user and group, e.g., 'taskmaster'
-    # Change process GID and UID to drop root privileges
-    try:
-        # Set the effective user and group IDs to 'taskmaster' or another low-privileged user
-        taskmaster_uid = pwd.getpwnam("taskmaster").pw_uid
-        taskmaster_gid = grp.getgrnam("taskmaster").gr_gid
-        os.setgid(taskmaster_gid)
-        os.setuid(taskmaster_uid)
-    except OSError as e:
-        print(f"Unable to change user and group ID: {e}")
-        return
 
     taskmaster.server = await asyncio.start_server(
         partial(handle_client, taskmaster=taskmaster),
@@ -128,7 +134,9 @@ async def main():
                 taskmaster.server.serve_forever(), taskmaster_task
             )
         except asyncio.CancelledError:
-            logger.info("Server task cancelled as part of shutdown process. Shutdown successfully.")
+            logger.info(
+                "Server task cancelled as part of shutdown process. Shutdown successfully."
+            )
         except Exception as e:
             logger.error(f"Unexpected error: {e}")
 
