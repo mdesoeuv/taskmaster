@@ -1,0 +1,36 @@
+programs:
+  sleep:
+    cmd: "sleep 1000"
+    numprocs: 3
+    umask: "022"
+    workingdir: .
+    autostart: true
+    autorestart: never
+    exitcodes:
+    - 0
+    startretries: 3
+    starttime: 10
+    stopsignal: TERM
+    stoptime: 1
+    stdout: ./logs/sleep_1000.stdout
+    stderr: ./logs/sleep_1000.stderr
+
+
+  ls_default:
+    cmd: "ls"
+    umask: "022"
+    workingdir: .
+    autostart: true
+    autorestart: never
+    exitcodes:
+    - 0
+    startretries: 3
+    starttime: 10
+    stopsignal: TERM
+    stoptime: 1
+    stdout: ./logs/ls_default.stdout
+    stderr: ./logs/ls_default.stderr
+
+    
+
+
