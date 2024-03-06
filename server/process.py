@@ -78,7 +78,7 @@ class Process:
                 )
             self.watch_successfull_start_task = asyncio.create_task(
                 self.watch_successfull_start()
-                )
+            )
             await self.monitor_process()
         except Exception as e:
             self.stopped_at = datetime.now()
@@ -133,7 +133,23 @@ class Process:
         )
         asyncio.create_task(self.start())
 
-    async def stop(self):
+    async def wait_for_process_to_stop(self):
+        try:
+            await asyncio.wait_for(self.process.wait(), timeout=self.stoptime)
+            logger.info(f"Process {self.name} stopped")
+            self.stopped_at = datetime.now()
+            self.status = Status.STOPPED
+            if self.stdout_reader_task:
+                self.stdout_reader_task.cancel()
+            if self.stderr_reader_task:
+                self.stderr_reader_task.cancel()
+        except asyncio.TimeoutError:
+            logger.warning(
+                f"Process {self.name} did not stop in time, killing it"
+            )
+            self.kill()
+
+    def stop(self):
         logger.debug(
             f"Stopping process {self.name} with signal {self.stopsignal}"
         )
@@ -141,19 +157,8 @@ class Process:
             self.watch_successfull_start_task.cancel()
             self.process.send_signal(self.stopsignal)
             self.status = Status.STOPPING
-            try:
-                await asyncio.wait_for(
-                    self.process.wait(), timeout=self.stoptime
-                )
-                logger.info(f"Process {self.name} stopped")
-                self.stopped_at = datetime.now()
-                self.status = Status.STOPPED
-                if self.stdout_reader_task:
-                    self.stdout_reader_task.cancel()
-                if self.stderr_reader_task:
-                    self.stderr_reader_task.cancel()
-            except asyncio.TimeoutError:
-                self.kill()
+            asyncio.create_task(self.wait_for_process_to_stop())
+            logger.info(f"Shutdown initiated for process {self.name}")
         else:
             logger.info(f"Process {self.name} is already stopped")
 

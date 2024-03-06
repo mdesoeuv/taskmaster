@@ -52,7 +52,7 @@ async def handle_command(
         case "start":
             return task.start()
         case "stop":
-            return await task.stop()
+            return task.stop()
         case "restart":
             return task.restart()
         case "status":
