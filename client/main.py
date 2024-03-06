@@ -201,11 +201,14 @@ async def start_client(host, port):
 
 if __name__ == "__main__":
     HOST = "127.0.0.1"
-    PORT = parse_server_port()
-
+    try:
+        PORT = parse_server_port()
+    except Exception as e:
+        logger.error(f"Error parsing server port: {e}")
+        exit(1)
     try:
         asyncio.run(start_client(HOST, PORT))
     except KeyboardInterrupt:
         logger.info("Client interrupted by user. Closing connection...")
     except Exception as e:
-        logger.error(f"An error occurreddddd: {e}")
+        logger.error(f"An error occurred: {e}")
