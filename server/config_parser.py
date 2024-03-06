@@ -48,20 +48,22 @@ async def define_programs(
             program = ProgramDefinition(
                 name=program_name,
                 cmd=prog.get("cmd"),
-                numprocs=prog.get("numprocs"),
+                numprocs=prog.get("numprocs", 1),
                 umask=int(prog.get("umask", "022"), 8),
-                cwd=prog.get("workingdir"),
-                autostart=prog.get("autostart"),
-                autorestart=AutoRestart(str(prog.get("autorestart")).lower()),
-                exitcodes=prog.get("exitcodes"),
-                startretries=prog.get("startretries"),
-                starttime=prog.get("starttime"),
+                cwd=prog.get("workingdir", "."),
+                autostart=prog.get("autostart", True),
+                autorestart=AutoRestart(
+                    str(prog.get("autorestart", "unexpected")).lower()
+                ),
+                exitcodes=prog.get("exitcodes", [0]),
+                startretries=prog.get("startretries", 3),
+                starttime=prog.get("starttime", 0),
                 stopsignal=Signal(prog.get("stopsignal", "TERM")).signal,
-                stoptime=prog.get("stoptime"),
+                stoptime=prog.get("stoptime", 10),
                 stdout=prog.get("stdout", "/dev/null"),
                 stderr=prog.get("stderr", "/dev/null"),
                 env=format_env(prog.get("env", {})),
-                mail_alerting=prog.get("mail_alerting"),
+                mail_alerting=prog.get("mail_alerting", False),
             )
         except Exception as e:
             logger.error("Error while parsing task definition.")

@@ -1,0 +1,8 @@
+programs:
+  default:
+    cmd: "ls"
+
+  default_stdout_stderr:
+    cmd: "ls"
+    stdout: ./logs/default_stdout_stderr.stdout
+    stderr: ./logs/default_stdout_stderr.stderr
