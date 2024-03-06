@@ -1,11 +1,10 @@
 from dataclasses import dataclass, field
 from typing import List
-from yamldataclassconfig.config import YamlDataClassConfig
 from enums import AutoRestart, Signal
 
 
 @dataclass
-class ProgramDefinition(YamlDataClassConfig):
+class ProgramDefinition:
     name: str
     cmd: str
     umask: int
@@ -22,3 +21,6 @@ class ProgramDefinition(YamlDataClassConfig):
     stderr: str = "/dev/null"
     env: dict = None
     mail_alerting: bool = False
+
+
+
