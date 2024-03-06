@@ -97,7 +97,7 @@ class Program(ProgramDefinition):
         logger.info(log_string)
         return log_string
 
-    async def stop(self):
+    def stop(self):
         self.state = Status.STOPPED
         logger.info(f"Stopping task {self.name}")
         try:
@@ -109,13 +109,13 @@ class Program(ProgramDefinition):
                     )
                     continue
                 logger.debug(f"Stopping process {self.name}-{process_id}")
-                await self.processes[process_id].stop()
+                self.processes[process_id].stop()
 
         except Exception as e:
             logger.debug(f"Error stopping process: {e}")
             return f"Error stopping task {self.name}: {e}"
-        logger.info(f"Task {self.name} stopped successfully")
-        return f"Task {self.name} stopped successfully"
+        logger.info(f"Program {self.name} stop initiated successfully")
+        return f"Program {self.name} stop initiated successfully"
 
     def restart(self):
 
