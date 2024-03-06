@@ -1,0 +1,47 @@
+programs:
+
+  ls_success:
+    cmd: "ls"
+    numprocs: 1
+    umask: "022"
+    workingdir: .
+    autostart: true
+    autorestart: never
+    exitcodes:
+    - 0
+    startretries: 3
+    starttime: 0
+    stopsignal: TERM
+    stoptime: 1
+    stdout: ./logs/ls_success.stdout
+    stderr: ./logs/ls_success.stderr
+  
+  ls_fail: 
+    cmd: "ls /nonexistent"
+    numprocs: 1
+    umask: "022"
+    workingdir: .
+    autostart: true
+    autorestart: unexpected
+    exitcodes:
+    - 0
+    startretries: 3
+    starttime: 0
+    stopsignal: TERM
+    stoptime: 1
+    
+  ls_fail_exitcode_success:
+    cmd: "ls /nonexistent"
+    numprocs: 1
+    umask: "022"
+    workingdir: .
+    autostart: true
+    autorestart: unexpected
+    exitcodes:
+    - 2
+    startretries: 3
+    starttime: 0
+    stopsignal: TERM
+    stoptime: 1
+    stdout: ./logs/ls_fail_exitcode_success.stdout
+    stderr: ./logs/ls_fail_exitcode_success.stderr
