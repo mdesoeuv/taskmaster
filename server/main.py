@@ -49,7 +49,7 @@ async def handle_client(
 
     try:
         while True:
-            data = await reader.read(100)
+            data = await reader.read(4096)
             if not data:
                 break
             message = data.decode()

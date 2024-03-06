@@ -27,6 +27,9 @@ command_completer = WordCompleter(valid_commands, ignore_case=True)
 
 
 def is_command_valid(input_command: str) -> bool:
+    if len(input_command) > 100:
+        logger.info("Command is too long.")
+        return False
     command = input_command.split()
 
     match len(command):
