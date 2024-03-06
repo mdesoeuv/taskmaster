@@ -111,10 +111,12 @@ programs:
 - `start` <program>
 - `stop` <program>
 - `restart` <program>
-- `reload`
-- `status`
-- `shutdown`
-- `quit`
+- `reload` : reload configuration file
+- `status` : show the status of all programs
+- `list` : list all programs
+- `loglevel` + `[INFO, DEBUG, ERROR, CRITICAL]` : set the server log level
+- `shutdown` : shuts the server down
+- `quit` : quit the client
 
 
 ### Features
@@ -144,7 +146,25 @@ programs:
 - Client / Server architecture
 - Mail alerting on Aborted / Unexpected exit
 - Advanced Logging (levels + file)
+- Prilege drop when run as sudo user
+- Logging level setup through client command
 
+
+### Privilege Drop 
+
+The server allows privilege drop when ran as sudo user
+
+
+#### Create a user for demonstration
+
+- `sudo useradd evaluator`
+- `passwd evaluator`
+
+#### Start sever with sudo
+
+The command must be prefixed with `sudo env "USERNAME=evaluator" "PATH=$PATH"` to allow sudo to run python applications  
+`sudo env "USERNAME=evaluator" "PATH=$PATH" python server/main.py -p 5555 -c configurations/privilege.yaml`
+Privileges will be dropped to `evaluator` and programs will run with these privileges  
 
 
 ### Send a SIGHUP signal to the server

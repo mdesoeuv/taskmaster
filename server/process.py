@@ -36,6 +36,7 @@ class Process:
     mail_alerting: bool = False
     stdout_reader_task: asyncio.Task = None
     stderr_reader_task: asyncio.Task = None
+    watch_successfull_start_task: asyncio.Task = None
 
     async def start(self):
         try:
@@ -75,7 +76,9 @@ class Process:
                 self.stderr_reader_task = asyncio.create_task(
                     self.read_stderr()
                 )
-            asyncio.create_task(self.watch_successfull_start())
+            self.watch_successfull_start_task = asyncio.create_task(
+                self.watch_successfull_start()
+                )
             await self.monitor_process()
         except Exception as e:
             self.stopped_at = datetime.now()
@@ -89,7 +92,7 @@ class Process:
         # Wait for the process to finish asynchronously
         self.returncode = await self.process.wait()
         self.stopped_at = datetime.now()
-
+        self.watch_successfull_start_task.cancel()
         if self.returncode not in self.exitcodes:
             logger.info(
                 f"Process {self.name} exited with unexpected code {self.returncode}"
@@ -135,6 +138,7 @@ class Process:
             f"Stopping process {self.name} with signal {self.stopsignal}"
         )
         if self.process:
+            self.watch_successfull_start_task.cancel()
             self.process.send_signal(self.stopsignal)
             self.status = Status.STOPPING
             try:
@@ -182,7 +186,7 @@ class Process:
 
     async def watch_successfull_start(self):
         await asyncio.sleep(self.starttime)
-        if self.returncode is None:
+        if self.returncode is None and self.status == Status.STARTING:
             self.status = Status.RUNNING
             logger.info(
                 f"Process {self.name}, pid {self.process.pid}, RUNNING"

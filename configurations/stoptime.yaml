@@ -1,0 +1,35 @@
+programs:
+
+  python_success:
+    cmd: "python"
+    numprocs: 1
+    umask: "022"
+    workingdir: .
+    autostart: true
+    autorestart: never
+    exitcodes:
+    - 0
+    startretries: 3
+    starttime: 0
+    stopsignal: TERM
+    stoptime: 10
+    stdout: ./logs/python_success.stdout
+    stderr: ./logs/python_success.stderr
+
+
+  python_fail:
+    cmd: "python"
+    numprocs: 1
+    umask: "022"
+    workingdir: .
+    autostart: true
+    autorestart: never
+    exitcodes:
+    - 0
+    startretries: 3
+    starttime: 0
+    stopsignal: INT
+    stoptime: 20
+    stdout: ./logs/python_fail.stdout
+    stderr: ./logs/python_fail.stderr
+
