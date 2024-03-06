@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from yamldataclassconfig.config import YamlDataClassConfig
 from definitions import ProgramDefinition
 from program import Program
 from typing import Dict
@@ -8,7 +7,7 @@ import asyncio
 
 
 @dataclass
-class TaskMaster(YamlDataClassConfig):
+class TaskMaster:
     config_file: pathlib.Path
     programs_definition: Dict[str, ProgramDefinition] = field(
         default_factory=dict

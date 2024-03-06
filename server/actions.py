@@ -5,11 +5,9 @@ from definitions import ProgramDefinition
 from dataclasses import dataclass
 from config_parser import (
     config_file_parser,
-    ProgramDefinitionError,
-    ConfigError,
     define_programs,
 )
-from exceptions import ProcessException
+from exceptions import ProcessException, ProgramDefinitionError, ConfigError
 from taskmaster import TaskMaster
 
 logger = logging.getLogger(__name__)

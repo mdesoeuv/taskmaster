@@ -13,8 +13,6 @@ from actions import launch_programs, reload_config_file, shutdown
 from taskmaster import TaskMaster
 import os
 import pwd
-import grp
-import getpass
 
 try:
     root_logger = logging.getLogger()
